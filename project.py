@@ -113,17 +113,18 @@ def main():
 
         object.setKeywords(extractor.extract_keywords(
             object.getCorpusString()))
-
+    
     setBottomNodes(getMasterKeywordList(imageObjectArray))
+    
+    #loads images into memory
     loadImages()
-
     images = {k: PIL.Image.open(fname) for k, fname in icons.items()}
 
-    print(images)
 
     B = nx.Graph()
     B.add_nodes_from(bottomNodes, bipartite=1)
 
+    #create edges
     i = 1
     for imageObject in imageObjectArray:
         keywords = imageObject.getKeywords()
@@ -134,7 +135,8 @@ def main():
             if kw[0] in bottomNodes:
                 B.add_edge(i, kw[0], image=images[title])
         i += 1
-
+    
+    #separate top and bottom nodes
     left, right = nx.bipartite.sets(B, top_nodes=bottomNodes)
     pos = {}
     
