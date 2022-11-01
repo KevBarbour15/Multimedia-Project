@@ -133,12 +133,13 @@ def main():
         B.add_node(i, image=images[title])
         for kw in keywords:
             if kw[0] in bottomNodes:
-                B.add_edge(i, kw[0], image=images[title])
+                B.add_edge(i, kw[0])
         i += 1
     
     #separate top and bottom nodes
     left, right = nx.bipartite.sets(B, top_nodes=bottomNodes)
     pos = {}
+    
     
     i = 1
     for node in right:
@@ -151,17 +152,8 @@ def main():
         i += 5
     
     fig, ax = plt.subplots()
-    
-    nx.draw_networkx_edges(
-        B,
-        pos=pos,
-    )
-
-    nx.draw_networkx_nodes(
-        B,
-        pos=pos,
-        label=True
-    )
+    ax.autoscale(True)
+    nx.draw(B,pos=pos)
 
     # Transform from data coordinates (scaled between xlim and ylim) to display coordinates
     tr_figure = ax.transData.transform
