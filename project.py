@@ -153,7 +153,7 @@ def main():
     
     fig, ax = plt.subplots()
     ax.autoscale(True)
-    nx.draw(B,pos=pos)
+    nx.draw(B,pos=pos,with_labels=True)
 
     # Transform from data coordinates (scaled between xlim and ylim) to display coordinates
     tr_figure = ax.transData.transform
