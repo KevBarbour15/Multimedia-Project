@@ -114,27 +114,26 @@ def main():
 
         object.setKeywords(extractor.extract_keywords(
             object.getCorpusString()))
-    
-    
+
     B = nx.Graph()
-    
+
     setBottomNodes(getMasterKeywordList(imageObjectArray))
-    
-    colors = ['r','b','y','c']*25
-    
+
+    colors = ['r', 'b', 'y', 'c']*25
+
     # create edges between each image object node and it's keywords
     i = 1
     for imageObject in imageObjectArray:
         keywords = imageObject.getKeywords()
         topNodes.append(i)
         color = randomColor()
-        B.add_node(i, color = "tab:gray")
+        B.add_node(i, color="tab:gray")
         for kw in keywords:
             if kw[0] in bottomNodes:
-                B.add_edge(i, kw[0],color=color)
+                kwStrength = kw[1] * 20
+                B.add_edge(i, kw[0], color=color, weight=kwStrength)
         i += 1
-    
-    
+
     left, right = nx.bipartite.sets(B, top_nodes=topNodes)
     pos = {}
 
@@ -148,12 +147,15 @@ def main():
     for node in left:
         pos[node] = (1, i)
         i -= 7
-    
+
     edges = B.edges()
-    edgeColors = [B[u][v]['color'] for u,v in edges]
-    
-    nx.draw(B, pos=pos, with_labels = True, node_color="tab:gray", edge_color=edgeColors)     
+    edgeColors = [B[u][v]['color'] for u, v in edges]
+    edgeWeight = [B[u][v]['weight'] for u, v in edges]
+
+    nx.draw(B, pos=pos, with_labels=True, node_color="tab:gray",
+            edge_color=edgeColors, width=edgeWeight)
     plt.show()
+
 
 def getMasterKeywordList(objectArray: list):
     masterKeywordList = {}
@@ -163,18 +165,21 @@ def getMasterKeywordList(objectArray: list):
 
     return masterKeywordList
 
+
 def setBottomNodes(keywordsList):
     for kw in keywordsList:
         bottomNodes.append(kw)
-        
+
+
 def randomColor():
-  rgb = []
-  for i in range(3):
-   r = random.randint(0,255)
-   g = random.randint(0,255)
-   b = random.randint(0,255)
-   rgb = [r,g,b]
-  return rgb
+    rgb = []
+    for i in range(3):
+        r = random.randint(0, 255)
+        g = random.randint(0, 255)
+        b = random.randint(0, 255)
+        rgb = [r, g, b]
+    return rgb
+
 
 if __name__ == "__main__":
     main()
