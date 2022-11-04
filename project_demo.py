@@ -11,7 +11,7 @@ import networkx as nx
 from networkx.algorithms import bipartite
 import matplotlib.pyplot as plt
 import PIL
-import random
+import math, random
 
 LANGUAGE = "en"
 MAX_NGRAM_SIZE = 1  # Size of keywords, more than 1 to get phrases.
@@ -31,6 +31,7 @@ class ImageObject:
     def __init__(self, corpus=[], keywords=[]):
         self._corpus: list = corpus
         self._keywords: list = keywords
+        self._tfidf: float = 0.00
 
     def getCorpus(self) -> list:
         return self._corpus
@@ -54,6 +55,12 @@ class ImageObject:
         Returns a list of tuples: (word, weight).
         """
         return self._keywords
+
+    def setTFIDF(self, val) -> None:
+        self._tfidf = val
+
+    def getTFIDF(self) -> float:
+        return self._tfidf
 
 
 def main():
@@ -105,61 +112,120 @@ def main():
         lemmatziedResponsesList.append(lemmatizedWords)
 
     for lemmatziedResponse in lemmatziedResponsesList:
-
         imageObjectArray.append(ImageObject(lemmatziedResponse))
 
+    i = 0
     for object in imageObjectArray:
+
         extractor = KeywordExtractor(
             lan=LANGUAGE, n=MAX_NGRAM_SIZE, dedupLim=DEDUPLICATION_THRESHSOLD, top=NUM_OF_KEYWORDS, features=None)
 
         object.setKeywords(extractor.extract_keywords(
             object.getCorpusString()))
 
+    i = 0
+    for response in lemmatziedResponsesList:
+        wordCount = len(lemmatziedResponsesList[i])
+
+        for kw in imageObjectArray[i].getKeywords():
+            kwCount = 0
+            print(kw[0])
+            for word in response:
+                if kw[0] in word:
+                    kwCount += 1
+
+                tf = kwCount / wordCount
+                idf = math.log(len(imageObjectArray) / 1)
+
+        imageObjectArray[i].setTFIDF(tf * idf)
+
+        i += 1
+
+    for image in imageObjectArray:
+        print(image.getTFIDF())
+
+    # setBottomNodes(getMasterKeywordList(imageObjectArray))
+
+    # loads images into memory
+    loadImages()
+    images = {k: PIL.Image.open(fname) for k, fname in icons.items()}
+
     B = nx.Graph()
-
-    setBottomNodes(getMasterKeywordList(imageObjectArray))
-
-    colors = ['r', 'b', 'y', 'c']*25
-
-    # create edges between each image object node and it's keywords
+    
+    # the number of the images we want to use in the working demo 
+    # current selection is arbitrary 
+    demoImages = [1,3,7, 10]
+    
+    # create edges
     i = 1
     for imageObject in imageObjectArray:
         keywords = imageObject.getKeywords()
-        topNodes.append(i)
         color = randomColor()
-        B.add_node(i, color="tab:gray")
-        for kw in keywords:
-            if kw[0] in bottomNodes:
-                kwStrength = kw[1] * 20
-                B.add_edge(i, kw[0], color=color, weight=kwStrength)
+        if i in demoImages:
+            topNodes.append(i)
+            title = str(i)
+            B.add_node(i, image=images[title])
+            for kw in keywords:
+                bottomNodes.append(kw)
+                if kw in bottomNodes:
+                  kwStrength = kw[1] * 15
+                  B.add_edge(i, kw[0],color=color, weight=kwStrength)
         i += 1
 
+    # separate top and bottom nodes
     left, right = nx.bipartite.sets(B, top_nodes=topNodes)
     pos = {}
 
-    # Update position for node from each group
     i = 1
     for node in right:
         pos[node] = (2, i)
-        i += 3
+        i += 10
 
-    i = (len(topNodes) * 7)
+    i = 1
     for node in left:
         pos[node] = (1, i)
-        i -= 7
+        i += 25
 
+    fig, ax = plt.subplots()
+    
     edges = B.edges()
     edgeColors = [B[u][v]['color'] for u, v in edges]
     edgeWeight = [B[u][v]['weight'] for u, v in edges]
+    nx.draw(B, pos=pos, with_labels=True, node_color="tab:grey", edge_color=edgeColors, width=edgeWeight)
 
-    nx.draw(B, pos=pos, with_labels=True, node_color="tab:gray",
-            edge_color=edgeColors, width=edgeWeight)
+    # Transform from data coordinates (scaled between xlim and ylim) to display coordinates
+    tr_figure = ax.transData.transform
+
+    # Transform from display to figure coordinates
+    tr_axes = fig.transFigure.inverted().transform
+
+    # Select the size of the image (relative to the X axis)
+    icon_size = (ax.get_xlim()[1] - ax.get_xlim()[0]) * 0.1
+    icon_center = icon_size / 2.0
+
+    isInt = True
+    for n in B.nodes:
+        try:
+            int(n)
+        except ValueError:
+            isInt = False
+        if isInt:
+            xf, yf = tr_figure(pos[n])
+            xa, ya = tr_axes((xf, yf))
+            # get overlapped axes and plot icon
+            a = plt.axes(
+                [xa - icon_center, ya - icon_center, icon_size, icon_size])
+            a.imshow(B.nodes[n]["image"])
+            a.axis("off")
+
+        isInt = True
+
     plt.show()
 
 
 def getMasterKeywordList(objectArray: list):
     masterKeywordList = {}
-    for imageObject in imageObjectArray:
+    for imageObject in objectArray:
         for kw in imageObject.getKeywords():
             masterKeywordList[kw[0]] = kw[1]
 
@@ -171,6 +237,22 @@ def setBottomNodes(keywordsList):
         bottomNodes.append(kw)
 
 
+def loadImages():
+    directory = 'images'
+    for filename in os.listdir(directory):
+        f = os.path.join(directory, filename)
+        if os.path.isfile(f):
+            pathname, extension = os.path.splitext(f)
+            fname = pathname.split('/')
+            icons[fname[-1]] = f
+
+
+def parseName(filename):
+    x = filename.split('/')
+    print(x)
+
+    return x
+
 def randomColor():
     rgb = []
     for i in range(3):
@@ -179,7 +261,6 @@ def randomColor():
         b = random.randint(0, 255)
         rgb = [r, g, b]
     return rgb
-
 
 if __name__ == "__main__":
     main()
