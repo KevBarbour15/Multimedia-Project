@@ -11,6 +11,7 @@ import networkx as nx
 from networkx.algorithms import bipartite
 import matplotlib.pyplot as plt
 import PIL
+import math
 
 LANGUAGE = "en"
 MAX_NGRAM_SIZE = 1  # Size of keywords, more than 1 to get phrases.
@@ -30,6 +31,7 @@ class ImageObject:
     def __init__(self, corpus=[], keywords=[]):
         self._corpus: list = corpus
         self._keywords: list = keywords
+        self._tfidf: float = 0.00
 
     def getCorpus(self) -> list:
         return self._corpus
@@ -53,6 +55,12 @@ class ImageObject:
         Returns a list of tuples: (word, weight).
         """
         return self._keywords
+
+    def setTFIDF(self, val) -> None:
+        self._tfidf = val
+
+    def getTFIDF(self) -> float:
+        return self._tfidf
 
 
 def main():
@@ -104,16 +112,38 @@ def main():
         lemmatziedResponsesList.append(lemmatizedWords)
 
     for lemmatziedResponse in lemmatziedResponsesList:
-
         imageObjectArray.append(ImageObject(lemmatziedResponse))
-
+        
+    i = 0
     for object in imageObjectArray:
+
         extractor = KeywordExtractor(
             lan=LANGUAGE, n=MAX_NGRAM_SIZE, dedupLim=DEDUPLICATION_THRESHSOLD, top=NUM_OF_KEYWORDS, features=None)
 
         object.setKeywords(extractor.extract_keywords(
             object.getCorpusString()))
-    
+
+    i = 0
+    for response in lemmatziedResponsesList:
+        wordCount = len(lemmatziedResponsesList[i])
+
+        for kw in imageObjectArray[i].getKeywords():
+            kwCount = 0
+            print(kw[0])
+            for word in response:
+                if kw[0] in word:            
+                    kwCount += 1
+
+                tf = kwCount / wordCount
+                idf = math.log(len(imageObjectArray) / 1)
+
+        imageObjectArray[i].setTFIDF(tf * idf)
+
+        i += 1
+
+    for image in imageObjectArray:
+        print(image.getTFIDF())
+
     setBottomNodes(getMasterKeywordList(imageObjectArray))
     
     #loads images into memory
@@ -188,7 +218,7 @@ def main():
 
 def getMasterKeywordList(objectArray: list):
     masterKeywordList = {}
-    for imageObject in imageObjectArray:
+    for imageObject in objectArray:
         for kw in imageObject.getKeywords():
             masterKeywordList[kw[0]] = kw[1]
 
