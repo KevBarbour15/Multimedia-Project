@@ -10,6 +10,7 @@ import os
 import networkx as nx
 from networkx.algorithms import bipartite
 import matplotlib.pyplot as plt
+import numpy as np
 import PIL
 import random, math
 
@@ -64,7 +65,9 @@ class ImageObject:
 
 def main():
     responseList = []
-    annotations = ["/annotations/Image_Annotations.csv","/annotations/Image_Annotations_3.csv"]
+    annotations = ["/annotations/Image_Annotations_Set_1.csv",
+                    "/annotations/Image_Annotations_Set_2.csv",
+                   "/annotations/Image_Annotations_Set_3.csv"]
     
     for file in annotations:
       df = pd.read_csv(os.getcwd() + file)
@@ -130,7 +133,6 @@ def main():
 
         for kw in imageObjectArray[i].getKeywords():
             kwCount = 0
-            print(kw[0])
             for word in response:
                 if kw[0] in word:            
                     kwCount += 1
@@ -144,46 +146,32 @@ def main():
 
     for image in imageObjectArray:
         print(image.getTFIDF())
-     
-    B = nx.Graph()
+        
+    labels = ['#5', '#4', '#3', '#2', '#1']
+    mostCommon = [20, 34, 30, 35, 27]
+    mostUnique = [25, 32, 34, 20, 25]
 
-    setBottomNodes(getMasterKeywordList(imageObjectArray))
+    x = np.arange(len(labels))  # the label locations
+    width = 0.35  # the width of the bars
 
-    # create edges between each image object node and it's keywords
-    i = 1
-    for imageObject in imageObjectArray:
-        keywords = imageObject.getKeywords()
-        topNodes.append(i)
-        color = randomColor()
-        B.add_node(i)
-        for kw in keywords:
-            if kw[0] in bottomNodes:
-                kwStrength = kw[1] * 10
-                B.add_edge(i, kw[0], color=color, weight=kwStrength)
-        i += 1
+    fig, ax = plt.subplots()
+    rects1 = ax.bar(x - width/2, mostCommon, width, label='Common')
+    rects2 = ax.bar(x + width/2, mostUnique, width, label='Unique')
 
-    left, right = nx.bipartite.sets(B, top_nodes=topNodes)
-    pos = {}
+    # Add some text for labels, title and custom x-axis tick labels, etc.
+    ax.set_xlabel('Ranking #5 - #1')
+    ax.set_ylabel('TF_IDF Score')
+    ax.set_title('The Most Common and Most Unique keywords sorted by TF-IDF')
+    ax.set_xticks(x, labels)
+    ax.legend()
 
-    # Update position for node from each group
-    i = 1
-    for node in right:
-        pos[node] = (2, i)
-        i += 3
+    ax.bar_label(rects1, padding=3)
+    ax.bar_label(rects2, padding=3)
 
-    i = (len(topNodes) * 7)
-    for node in left:
-        pos[node] = (1, i)
-        i -= 7
-    
-    edges = B.edges()
-    edgeColors = [B[u][v]['color'] for u, v in edges]
-    edgeWeight = [B[u][v]['weight'] for u, v in edges]
+    fig.tight_layout()
 
-    nx.draw(B, pos=pos, with_labels=True, node_color=(0.8, 0.8, 0.8),
-            edge_color=edgeColors, width=edgeWeight)
     plt.show()
-
+    
 
 def getMasterKeywordList(objectArray: list):
     masterKeywordList = {}
@@ -194,10 +182,13 @@ def getMasterKeywordList(objectArray: list):
     return masterKeywordList
 
 
-def setBottomNodes(keywordsList):
-    for kw in keywordsList:
-        bottomNodes.append(kw)
-
+def getStrongestKeywords():
+  strongest = []
+  
+def getWeakestKeywords():
+  weakest = []
+  
+  
 
 def randomColor():
     rgb = []
