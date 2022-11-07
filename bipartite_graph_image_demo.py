@@ -131,30 +131,34 @@ def main():
     i = 0
     for response in lemmatziedResponsesList:
         wordCount = len(lemmatziedResponsesList[i])
-        
+        average = 0
+        tf = 0
+        idf = 0
+        j = 1
         for kw in imageObjectArray[i].getKeywords():
             kwCount = 0
-            print(kw[0])
             for word in response:
                 if kw[0] in word:
                     kwCount += 1
 
-                tf = kwCount / wordCount
+                tf = (kwCount / wordCount)
                 idf = math.log(len(imageObjectArray) / 1)
+            j += 1
+            average += (tf * idf)
 
-        imageObjectArray[i].setTFIDF(tf * idf)
-
-        i += 1 
+        average /= j
+        imageObjectArray[i].setTFIDF(average)
+        i += 1
 
     # loads images into memory
     loadImages()
     images = {k: PIL.Image.open(fname) for k, fname in icons.items()}
 
+    # initialize the graph and set the bottom nodes of keywords
     B = nx.Graph()
     setBottomNodes(getMasterKeywordList(imageObjectArray))
     demoImages = getRandomImages()
     
-    print(demoImages)
     # create edges
     i = 1
     for imageObject in imageObjectArray:
@@ -218,7 +222,6 @@ def main():
             a.axis("off")
 
         isInt = True
-
     plt.show()
 
 
@@ -227,7 +230,6 @@ def getMasterKeywordList(objectArray: list):
     for imageObject in objectArray:
         for kw in imageObject.getKeywords():
             masterKeywordList[kw[0]] = kw[1]
-
     return masterKeywordList
 
 
@@ -241,7 +243,6 @@ def getRandomImages():
   while i < 4:
     randomImages.append(random.randint(1,75))
     i += 1
-  
   return randomImages
 
 

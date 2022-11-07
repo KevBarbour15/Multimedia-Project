@@ -129,19 +129,23 @@ def main():
     i = 0
     for response in lemmatziedResponsesList:
         wordCount = len(lemmatziedResponsesList[i])
-
+        average = 0
+        tf = 0
+        idf = 0
+        j = 1
         for kw in imageObjectArray[i].getKeywords():
             kwCount = 0
-            print(kw[0])
             for word in response:
                 if kw[0] in word:
                     kwCount += 1
 
-                tf = kwCount / wordCount
+                tf = (kwCount / wordCount)
                 idf = math.log(len(imageObjectArray) / 1)
+            j += 1
+            average += (tf * idf)
 
-        imageObjectArray[i].setTFIDF(tf * idf)
-
+        average /= j
+        imageObjectArray[i].setTFIDF(average)
         i += 1
 
     B = nx.Graph()

@@ -13,6 +13,7 @@ import numpy as np
 import random
 import math
 import os
+import PIL
 
 LANGUAGE = "en"
 MAX_NGRAM_SIZE = 1  # Size of keywords, more than 1 to get phrases.
@@ -29,7 +30,7 @@ icons = {}
 
 
 class ImageObject:
-    def __init__(self, corpus=[], keywords=[], id = -1):
+    def __init__(self, corpus=[], keywords=[], id=-1):
         self._corpus: list = corpus
         self._keywords: list = keywords
         self._id: int = id
@@ -135,8 +136,6 @@ def main():
     i = 0
     for response in lemmatziedResponsesList:
         wordCount = len(lemmatziedResponsesList[i])
-        print("RESPONSE: ")
-        print(response)
         average = 0
         tf = 0
         idf = 0
@@ -154,39 +153,48 @@ def main():
 
         average /= j
         imageObjectArray[i].setTFIDF(average)
-        print("AVERAGE:")
-        print(imageObjectArray[i].getTFIDF())
-        print("\n")
         i += 1
 
-    labels = ['#5', '#4', '#3', '#2', '#1']
+    #create lists of the top 5 of each end of variance
     leastVariance = getLeast(imageObjectArray)
     mostVariance = getMost(imageObjectArray)
 
+    # add the TFIDF score to lists for graph
     leastVarianceNum = []
-    for image in leastVariance: leastVarianceNum.append(image.getTFIDF())
     mostVarianceNum = []
-    for image in mostVariance: mostVarianceNum.append(image.getTFIDF())
-    
+    for image in leastVariance:
+        leastVarianceNum.append(image.getTFIDF())
+    for image in mostVariance:
+        mostVarianceNum.append(image.getTFIDF())
+
+    leastImageNum = []
+    mostImageNum = []
+    for image in leastVariance:
+      leastImageNum.append("Image #{}".format(image.getImageID()))
+    for image in mostVariance:
+      mostImageNum.append("Image #{}".format(image.getImageID()))
+  
+    labels = list(zip(leastImageNum,mostImageNum))
     x = np.arange(len(labels))  # the label locations
     width = 0.35  # the width of the bars
+    height = 0
 
     fig, ax = plt.subplots()
-    rects1 = ax.bar(x - width/2, leastVarianceNum,
-                    width, label='Least Variance')
-    rects2 = ax.bar(x + width/2, mostVarianceNum, width, label='Most Variance')
-
+    least = ax.bar(x - width/2, leastVarianceNum,
+                    width, label='Least Variance', color="black")
+    most = ax.bar(x + width/2, mostVarianceNum, width,
+                    label='Most Variance', color = "lightgrey")
+    
     # Add some text for labels, title and custom x-axis tick labels, etc.
-    ax.set_xlabel('Image Rankings #5 ---> #1')
+    ax.set_xlabel('Image Rankings #5  ----->  #1')
     ax.set_ylabel('Average TF-IDF Score')
-    ax.set_title('Images with the most variance and least variance sorted by average TF-IDF of response')
+    ax.set_title(
+        'Images with the Least Variance and Most Variance sorted by average TF-IDF of response')
     ax.set_xticks(x, labels)
     ax.legend()
 
-    ax.bar_label(rects1, padding=3)
-    ax.bar_label(rects2, padding=3)
-
-    fig.tight_layout()
+    ax.bar_label(least, padding=3)
+    ax.bar_label(most, padding=3)
     plt.show()
 
 
@@ -197,10 +205,6 @@ def getMasterKeywordList(objectArray: list):
             masterKeywordList[kw[0]] = kw[1]
 
     return masterKeywordList
-
-
-def getStrongestKeywords():
-    strongest = []
 
 
 def getLeast(obarr):
@@ -238,6 +242,7 @@ def getMost(obarr):
 
         responseList.remove(max1)
         final_list.append(max1)
+
     final_list.reverse()
     return final_list
 
@@ -251,6 +256,16 @@ def randomColor():
         rgb = [r, g, b]
     return rgb
 
+
+def loadImages():
+    directory = 'images'
+    for filename in os.listdir(directory):
+        f = os.path.join(directory, filename)
+        if os.path.isfile(f):
+            pathname, extension = os.path.splitext(f)
+            fname = pathname.split('/')
+            icons[fname[-1]] = f
+            
 
 if __name__ == "__main__":
     main()
