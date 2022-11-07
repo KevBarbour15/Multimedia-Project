@@ -6,19 +6,19 @@ from nltk.stem import WordNetLemmatizer
 from nltk.corpus import wordnet
 from nltk import pos_tag
 from yake import KeywordExtractor
-import os
 import networkx as nx
 from networkx.algorithms import bipartite
 import matplotlib.pyplot as plt
 import numpy as np
-import PIL
-import random, math
+import random
+import math
+import os
 
 LANGUAGE = "en"
 MAX_NGRAM_SIZE = 1  # Size of keywords, more than 1 to get phrases.
 # Rate to avoid like-terms when picking out keywords. Should be less than 1.
 DEDUPLICATION_THRESHSOLD = 0.9
-NUM_OF_KEYWORDS = 3  # Number of keywords to retrieve per corpus.
+NUM_OF_KEYWORDS = 5  # Number of keywords to retrieve per corpus.
 
 imageObjectArray = []
 topNodes = []
@@ -55,7 +55,7 @@ class ImageObject:
         Returns a list of tuples: (word, weight).
         """
         return self._keywords
-      
+
     def setTFIDF(self, val) -> None:
         self._tfidf = val
 
@@ -66,14 +66,14 @@ class ImageObject:
 def main():
     responseList = []
     annotations = ["/annotations/Image_Annotations_Set_1.csv",
-                    "/annotations/Image_Annotations_Set_2.csv",
+                   "/annotations/Image_Annotations_Set_2.csv",
                    "/annotations/Image_Annotations_Set_3.csv"]
-    
+
     for file in annotations:
-      df = pd.read_csv(os.getcwd() + file)
-      rli = [df[str(col + 1)] for col in range(df.shape[1] - 1)]
-      responseList.extend(rli)
-    
+        df = pd.read_csv(os.getcwd() + file)
+        rli = [df[str(col + 1)] for col in range(df.shape[1] - 1)]
+        responseList.extend(rli)
+
     def preprocess_corpus(texts):
         englishStopWords = set(stopwords.words("english"))
 
@@ -126,42 +126,55 @@ def main():
 
         object.setKeywords(extractor.extract_keywords(
             object.getCorpusString()))
-    
+
     i = 0
     for response in lemmatziedResponsesList:
         wordCount = len(lemmatziedResponsesList[i])
-
+        print("RESPONSE: ")
+        print(response)
+        average = 0
+        tf = 0
+        idf = 0
+        j = 1
         for kw in imageObjectArray[i].getKeywords():
             kwCount = 0
             for word in response:
-                if kw[0] in word:            
+                if kw[0] in word:
                     kwCount += 1
 
-                tf = kwCount / wordCount
+                tf = (kwCount / wordCount)
                 idf = math.log(len(imageObjectArray) / 1)
+            j += 1
+            average += (tf * idf)
 
-        imageObjectArray[i].setTFIDF(tf * idf)
-
+        average /= j
+        imageObjectArray[i].setTFIDF(average)
+        print("AVERAGE:")
+        print(imageObjectArray[i].getTFIDF())
+        print("\n")
         i += 1
 
-    for image in imageObjectArray:
-        print(image.getTFIDF())
-        
     labels = ['#5', '#4', '#3', '#2', '#1']
-    mostCommon = [20, 34, 30, 35, 27]
-    mostUnique = [25, 32, 34, 20, 25]
+    leastVariance = getLeast(imageObjectArray)
+    mostVariance = getMost(imageObjectArray)
 
+    leastVarianceNum = []
+    for image in leastVariance: leastVarianceNum.append(image.getTFIDF())
+    mostVarianceNum = []
+    for image in mostVariance: mostVarianceNum.append(image.getTFIDF())
+    
     x = np.arange(len(labels))  # the label locations
     width = 0.35  # the width of the bars
 
     fig, ax = plt.subplots()
-    rects1 = ax.bar(x - width/2, mostCommon, width, label='Common')
-    rects2 = ax.bar(x + width/2, mostUnique, width, label='Unique')
+    rects1 = ax.bar(x - width/2, leastVarianceNum,
+                    width, label='Least Variance')
+    rects2 = ax.bar(x + width/2, mostVarianceNum, width, label='Most Variance')
 
     # Add some text for labels, title and custom x-axis tick labels, etc.
-    ax.set_xlabel('Ranking #5 - #1')
-    ax.set_ylabel('TF_IDF Score')
-    ax.set_title('The Most Common and Most Unique keywords sorted by TF-IDF')
+    ax.set_xlabel('Image Rankings #5 ---> #1')
+    ax.set_ylabel('Average TF-IDF Score')
+    ax.set_title('Images with the most variance and least variance sorted by average TF-IDF of response')
     ax.set_xticks(x, labels)
     ax.legend()
 
@@ -169,9 +182,8 @@ def main():
     ax.bar_label(rects2, padding=3)
 
     fig.tight_layout()
-
     plt.show()
-    
+
 
 def getMasterKeywordList(objectArray: list):
     masterKeywordList = {}
@@ -183,12 +195,47 @@ def getMasterKeywordList(objectArray: list):
 
 
 def getStrongestKeywords():
-  strongest = []
-  
-def getWeakestKeywords():
-  weakest = []
-  
-  
+    strongest = []
+
+
+def getLeast(obarr):
+    responseList = obarr
+    final_list = []
+    for i in range(0, 5):
+        max1 = 0
+        for j in range(len(responseList)):
+            tfidf = float(responseList[j].getTFIDF())
+            if max1 == 0:
+                max1 = responseList[j]
+            else:
+                if tfidf > max1.getTFIDF():
+                    max1 = responseList[j]
+
+        responseList.remove(max1)
+        final_list.append(max1)
+
+    final_list.reverse()
+    return final_list
+
+
+def getMost(obarr):
+    responseList = obarr
+    final_list = []
+    for i in range(0, 5):
+        max1 = 0
+        for j in range(len(responseList)):
+            tfidf = float(responseList[j].getTFIDF())
+            if max1 == 0:
+                max1 = responseList[j]
+            else:
+                if tfidf < max1.getTFIDF():
+                    max1 = responseList[j]
+
+        responseList.remove(max1)
+        final_list.append(max1)
+    final_list.reverse()
+    return final_list
+
 
 def randomColor():
     rgb = []

@@ -6,13 +6,12 @@ from nltk.stem import WordNetLemmatizer
 from nltk.corpus import wordnet
 from nltk import pos_tag
 from yake import KeywordExtractor
-import os
 import networkx as nx
 from networkx.algorithms import bipartite
 import matplotlib.pyplot as plt
-import PIL
 import random
 import math
+import os
 
 LANGUAGE = "en"
 MAX_NGRAM_SIZE = 1  # Size of keywords, more than 1 to get phrases.
@@ -145,11 +144,7 @@ def main():
 
         i += 1
 
-    for image in imageObjectArray:
-        print(image.getTFIDF())
-
     B = nx.Graph()
-
     setBottomNodes(getMasterKeywordList(imageObjectArray))
 
     # create edges between each image object node and it's keywords

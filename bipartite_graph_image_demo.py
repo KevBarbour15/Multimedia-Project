@@ -10,7 +10,6 @@ import networkx as nx
 from networkx.algorithms import bipartite
 import matplotlib.pyplot as plt
 import PIL
-import glob
 import math
 import random
 import os
@@ -132,7 +131,7 @@ def main():
     i = 0
     for response in lemmatziedResponsesList:
         wordCount = len(lemmatziedResponsesList[i])
-
+        
         for kw in imageObjectArray[i].getKeywords():
             kwCount = 0
             print(kw[0])
@@ -145,21 +144,17 @@ def main():
 
         imageObjectArray[i].setTFIDF(tf * idf)
 
-        i += 1
-
-    for image in imageObjectArray:
-        print(image.getTFIDF())
-
-    # setBottomNodes(getMasterKeywordList(imageObjectArray))
+        i += 1 
 
     # loads images into memory
     loadImages()
     images = {k: PIL.Image.open(fname) for k, fname in icons.items()}
 
     B = nx.Graph()
-
-    demoImages = [1, 3, 23, 61, 65]
-
+    setBottomNodes(getMasterKeywordList(imageObjectArray))
+    demoImages = getRandomImages()
+    
+    print(demoImages)
     # create edges
     i = 1
     for imageObject in imageObjectArray:
@@ -170,8 +165,7 @@ def main():
             title = str(i)
             B.add_node(i, image=images[title])
             for kw in keywords:
-                bottomNodes.append(kw)
-                if kw in bottomNodes:
+                if kw[0] in bottomNodes:
                     kwStrength = kw[1] * 25
                     B.add_edge(i, kw[0], color=color, weight=kwStrength)
         i += 1
@@ -183,7 +177,7 @@ def main():
     i = 1
     for node in right:
         pos[node] = (2, i)
-        i += 10
+        i += 10.25
 
     i = (len(topNodes) * 40)
     for node in left:
@@ -205,7 +199,7 @@ def main():
     tr_axes = fig.transFigure.inverted().transform
 
     # Select the size of the image (relative to the X axis)
-    icon_size = (ax.get_xlim()[1] - ax.get_xlim()[0]) * 0.1
+    icon_size = (ax.get_xlim()[1] - ax.get_xlim()[0]) * 0.125
     icon_center = icon_size / 2.0
 
     isInt = True
@@ -240,6 +234,15 @@ def getMasterKeywordList(objectArray: list):
 def setBottomNodes(keywordsList):
     for kw in keywordsList:
         bottomNodes.append(kw)
+        
+def getRandomImages():
+  randomImages = []
+  i = 0
+  while i < 4:
+    randomImages.append(random.randint(1,75))
+    i += 1
+  
+  return randomImages
 
 
 def loadImages():
