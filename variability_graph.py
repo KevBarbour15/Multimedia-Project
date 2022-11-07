@@ -29,9 +29,10 @@ icons = {}
 
 
 class ImageObject:
-    def __init__(self, corpus=[], keywords=[]):
+    def __init__(self, corpus=[], keywords=[], id = -1):
         self._corpus: list = corpus
         self._keywords: list = keywords
+        self._id: int = id
 
     def getCorpus(self) -> list:
         return self._corpus
@@ -61,6 +62,9 @@ class ImageObject:
 
     def getTFIDF(self) -> float:
         return self._tfidf
+
+    def getImageID(self) -> int:
+        return self._id
 
 
 def main():
@@ -116,9 +120,10 @@ def main():
 
         lemmatziedResponsesList.append(lemmatizedWords)
 
+    i = 1
     for lemmatziedResponse in lemmatziedResponsesList:
-
-        imageObjectArray.append(ImageObject(lemmatziedResponse))
+        imageObjectArray.append(ImageObject(lemmatziedResponse, [], i))
+        i += 1
 
     for object in imageObjectArray:
         extractor = KeywordExtractor(
