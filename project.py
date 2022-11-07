@@ -86,7 +86,6 @@ def main():
         processedResponsesList.append(preprocess_corpus(responseList[idx]))
 
     lemmatizer = WordNetLemmatizer()
-
     lemmatziedResponsesList = []
 
     def posTagger(nltk_tag):
@@ -156,7 +155,7 @@ def main():
         keywords = imageObject.getKeywords()
         topNodes.append(i)
         color = randomColor()
-        B.add_node(i, color="tab:gray")
+        B.add_node(i)
         for kw in keywords:
             if kw[0] in bottomNodes:
                 kwStrength = kw[1] * 10
@@ -181,7 +180,7 @@ def main():
     edgeColors = [B[u][v]['color'] for u, v in edges]
     edgeWeight = [B[u][v]['weight'] for u, v in edges]
 
-    nx.draw(B, pos=pos, with_labels=True, node_color="tab:gray",
+    nx.draw(B, pos=pos, with_labels=True, node_color=(0.8, 0.8, 0.8),
             edge_color=edgeColors, width=edgeWeight)
     plt.show()
 

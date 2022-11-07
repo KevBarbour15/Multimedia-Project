@@ -6,14 +6,10 @@ from nltk.stem import WordNetLemmatizer
 from nltk.corpus import wordnet
 from nltk import pos_tag
 from yake import KeywordExtractor
-import os
 import networkx as nx
 from networkx.algorithms import bipartite
 import matplotlib.pyplot as plt
-import PIL
-import math
-import random
-import glob
+import PIL, glob, math, random, os
 
 LANGUAGE = "en"
 MAX_NGRAM_SIZE = 1  # Size of keywords, more than 1 to get phrases.
@@ -161,7 +157,7 @@ def main():
 
         # the number of the images we want to use in the working demo
         # current selection is arbitrary
-        demoImages = [1, 3, 7, 10]
+        demoImages = [1, 3, 7]
 
         # create edges
         i = 1
@@ -175,7 +171,7 @@ def main():
                 for kw in keywords:
                     bottomNodes.append(kw)
                     if kw in bottomNodes:
-                        kwStrength = kw[1] * 15
+                        kwStrength = kw[1] * 25
                         B.add_edge(i, kw[0], color=color, weight=kwStrength)
             i += 1
 
@@ -198,8 +194,8 @@ def main():
         edges = B.edges()
         edgeColors = [B[u][v]['color'] for u, v in edges]
         edgeWeight = [B[u][v]['weight'] for u, v in edges]
-        nx.draw(B, pos=pos, with_labels=True, node_color="tab:grey",
-                edge_color=edgeColors, width=edgeWeight)
+        nx.draw(B, pos=pos, with_labels=True, node_color=(0.8, 0.8, 0.8),
+                edge_color=edgeColors, width=edgeWeight, font_size=25)
 
         # Transform from data coordinates (scaled between xlim and ylim) to display coordinates
         tr_figure = ax.transData.transform
@@ -208,7 +204,7 @@ def main():
         tr_axes = fig.transFigure.inverted().transform
 
         # Select the size of the image (relative to the X axis)
-        icon_size = (ax.get_xlim()[1] - ax.get_xlim()[0]) * 0.1
+        icon_size = (ax.get_xlim()[1] - ax.get_xlim()[0]) * 0.165
         icon_center = icon_size / 2.0
 
         isInt = True
