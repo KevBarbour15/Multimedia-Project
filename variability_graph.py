@@ -30,9 +30,9 @@ icons = {}
 
 
 class ImageObject:
-    def __init__(self, corpus=[], keywords=[], id=-1):
+    def __init__(self, corpus=[], keywords = {}, id=-1):
         self._corpus: list = corpus
-        self._keywords: list = keywords
+        self._keywords: dict = keywords
         self._id: int = id
 
     def getCorpus(self) -> list:
@@ -49,20 +49,11 @@ class ImageObject:
 
         return string
 
-    def setKeywords(self, keywords) -> None:
-        self._keywords = keywords
+    def addKeyword(self, key, val) -> None:
+        self._keywords[key] = val
 
-    def getKeywords(self) -> list:
-        """
-        Returns a list of tuples: (word, weight).
-        """
+    def getKeywords(self) -> dict:
         return self._keywords
-
-    def setTFIDF(self, val) -> None:
-        self._tfidf = val
-
-    def getTFIDF(self) -> float:
-        return self._tfidf
 
     def getImageID(self) -> int:
         return self._id
@@ -123,15 +114,15 @@ def main():
 
     i = 1
     for lemmatziedResponse in lemmatziedResponsesList:
-        imageObjectArray.append(ImageObject(lemmatziedResponse, [], i))
+        imageObjectArray.append(ImageObject(lemmatziedResponse, {}, i))
         i += 1
 
     for object in imageObjectArray:
         extractor = KeywordExtractor(
             lan=LANGUAGE, n=MAX_NGRAM_SIZE, dedupLim=DEDUPLICATION_THRESHSOLD, top=NUM_OF_KEYWORDS, features=None)
 
-        object.setKeywords(extractor.extract_keywords(
-            object.getCorpusString()))
+        for kw in extractor.extract_keywords(object.getCorpusString()):
+            object.getKeywords()[kw[0]] = kw[1]
 
     i = 0
     for response in lemmatziedResponsesList:
@@ -151,8 +142,10 @@ def main():
             j += 1
             average += (tf * idf)
 
-        average /= j
-        imageObjectArray[i].setTFIDF(average)
+            average /= j
+            imageObjectArray[i].addKeyword(kw, average)
+        # imageObjectArray[i].addTFIDF(average)
+        
         i += 1
 
     #create lists of the top 5 of each end of variance
@@ -196,6 +189,9 @@ def main():
     ax.bar_label(least, padding=3)
     ax.bar_label(most, padding=3)
     plt.show()
+
+    for x in imageObjectArray:
+        print(x.getTFIDF())
 
 
 def getMasterKeywordList(objectArray: list):
