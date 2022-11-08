@@ -170,9 +170,9 @@ def main():
     leastImageNum = []
     mostImageNum = []
     for image in leastVariance:
-      leastImageNum.append("Image #{}".format(image.getImageID()))
+      leastImageNum.append("#{}".format(image.getImageID()))
     for image in mostVariance:
-      mostImageNum.append("Image #{}".format(image.getImageID()))
+      mostImageNum.append("#{}".format(image.getImageID()))
   
     labels = list(zip(leastImageNum,mostImageNum))
     x = np.arange(len(labels))  # the label locations
@@ -181,15 +181,15 @@ def main():
 
     fig, ax = plt.subplots()
     least = ax.bar(x - width/2, leastVarianceNum,
-                    width, label='Least Variance', color="black")
+                    width, label='Least Variance', color="lightgrey")
     most = ax.bar(x + width/2, mostVarianceNum, width,
-                    label='Most Variance', color = "lightgrey")
+                    label='Most Variance', color = "black")
     
     # Add some text for labels, title and custom x-axis tick labels, etc.
-    ax.set_xlabel('Image Rankings #5  ----->  #1')
+    ax.set_xlabel('Image Rankings from 5  ----->  1')
     ax.set_ylabel('Average TF-IDF Score')
     ax.set_title(
-        'Images with the Least Variance and Most Variance sorted by average TF-IDF of response')
+        'Top 5 Images with the Least Variance and Most Variance sorted by average TF-IDF of response')
     ax.set_xticks(x, labels)
     ax.legend()
 

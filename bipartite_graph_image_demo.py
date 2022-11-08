@@ -158,6 +158,7 @@ def main():
     B = nx.Graph()
     setBottomNodes(getMasterKeywordList(imageObjectArray))
     demoImages = getRandomImages()
+    #demoImages = [1,10,19,39,67]
     
     # create edges
     i = 1
@@ -203,7 +204,7 @@ def main():
     tr_axes = fig.transFigure.inverted().transform
 
     # Select the size of the image (relative to the X axis)
-    icon_size = (ax.get_xlim()[1] - ax.get_xlim()[0]) * 0.125
+    icon_size = (ax.get_xlim()[1] - ax.get_xlim()[0]) * 0.12
     icon_center = icon_size / 2.0
 
     isInt = True
@@ -240,9 +241,10 @@ def setBottomNodes(keywordsList):
 def getRandomImages():
   randomImages = []
   i = 0
-  while i < 4:
-    randomImages.append(random.randint(1,75))
+  while i < 5:
+    randomImages.append(random.randint(1,70))
     i += 1
+  print(randomImages)
   return randomImages
 
 
