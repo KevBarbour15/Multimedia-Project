@@ -29,10 +29,12 @@ icons = {}
 
 
 class ImageObject:
-    def __init__(self, corpus=[], keywords=[]):
+    def __init__(self, corpus=[], keywords={}, id=-1):
         self._corpus: list = corpus
-        self._keywords: list = keywords
-        self._tfidf: float = 0.00
+        self._keywords: dict = keywords
+        self._id: int = id
+        self._tfidf: float
+        self._keywordsInfo: list
 
     def getCorpus(self) -> list:
         return self._corpus
@@ -48,19 +50,25 @@ class ImageObject:
 
         return string
 
-    def setKeywords(self, keywords) -> None:
-        self._keywords = keywords
+    def addKeyword(self, key, val) -> None:
+        self._keywords[key] = val
 
-    def getKeywords(self) -> list:
-        """
-        Returns a list of tuples: (word, weight).
-        """
+    def getKeywords(self) -> dict:
         return self._keywords
 
-    def setTFIDF(self, val) -> None:
-        self._tfidf = val
+    def setKeywordsInfo(self):
+        self._keywordsInfo
 
-    def getTFIDF(self) -> float:
+    def getKeywordInfo(self) -> list:
+        return self._keywordsInfo
+
+    def getImageID(self) -> int:
+        return self._id
+
+    def addAverageTFIDF(self, tfidf) -> float:
+        self._tfidf = tfidf
+
+    def getAverageTFIDF(self) -> float:
         return self._tfidf
 
 
@@ -86,7 +94,7 @@ def main():
     processedResponsesList = []
 
     for idx in range(len(responseList)):
-        # print(preprocess_corpus(responseList[idx]))
+        #print(preprocess_corpus(responseList[idx]))
         processedResponsesList.append(preprocess_corpus(responseList[idx]))
 
     lemmatizer = WordNetLemmatizer()
@@ -105,7 +113,6 @@ def main():
             return None
 
     for response in processedResponsesList:
-
         lemmatizedWords = []
         for word in response:
             tagged = pos_tag(word)
@@ -117,38 +124,17 @@ def main():
 
         lemmatziedResponsesList.append(lemmatizedWords)
 
+    i = 1
     for lemmatziedResponse in lemmatziedResponsesList:
-
-        imageObjectArray.append(ImageObject(lemmatziedResponse))
+        imageObjectArray.append(ImageObject(lemmatziedResponse, {}, i))
+        i += 1
 
     for object in imageObjectArray:
         extractor = KeywordExtractor(
             lan=LANGUAGE, n=MAX_NGRAM_SIZE, dedupLim=DEDUPLICATION_THRESHSOLD, top=NUM_OF_KEYWORDS, features=None)
 
-        object.setKeywords(extractor.extract_keywords(
-            object.getCorpusString()))
-
-    i = 0
-    for response in lemmatziedResponsesList:
-        wordCount = len(lemmatziedResponsesList[i])
-        average = 0
-        tf = 0
-        idf = 0
-        j = 1
-        for kw in imageObjectArray[i].getKeywords():
-            kwCount = 0
-            for word in response:
-                if kw[0] in word:
-                    kwCount += 1
-
-                tf = (kwCount / wordCount)
-                idf = math.log(len(imageObjectArray) / 1)
-            j += 1
-            average += (tf * idf)
-
-        average /= j
-        imageObjectArray[i].setTFIDF(average)
-        i += 1
+        for kw in extractor.extract_keywords(object.getCorpusString()):
+            object.getKeywords()[kw[0]] = kw[1]
 
     # loads images into memory
     loadImages()
@@ -157,9 +143,10 @@ def main():
     # initialize the graph and set the bottom nodes of keywords
     B = nx.Graph()
     setBottomNodes(getMasterKeywordList(imageObjectArray))
+  
     demoImages = getRandomImages()
     #demoImages = [1,10,19,39,67]
-    
+
     # create edges
     i = 1
     for imageObject in imageObjectArray:
@@ -170,19 +157,19 @@ def main():
             title = str(i)
             B.add_node(i, image=images[title])
             for kw in keywords:
-                if kw[0] in bottomNodes:
-                    kwStrength = kw[1] * 25
-                    B.add_edge(i, kw[0], color=color, weight=kwStrength)
+                if kw in bottomNodes:
+                    
+                    B.add_edge(i, kw, color=color)
         i += 1
-
         # separate top and bottom nodes
     left, right = nx.bipartite.sets(B, top_nodes=topNodes)
     pos = {}
 
-    i = 1
+    # create node postions for each vertex
+    i = (len(right)*9.5)
     for node in right:
         pos[node] = (2, i)
-        i += 10.25
+        i -= 9.5
 
     i = (len(topNodes) * 40)
     for node in left:
@@ -193,9 +180,9 @@ def main():
 
     edges = B.edges()
     edgeColors = [B[u][v]['color'] for u, v in edges]
-    edgeWeight = [B[u][v]['weight'] for u, v in edges]
+    #edgeWeight = [B[u][v]['weight'] for u, v in edges]
     nx.draw(B, pos=pos, with_labels=True, node_color=(0.8, 0.8, 0.8),
-            edge_color=edgeColors, width=edgeWeight, font_size=15)
+            edge_color=edgeColors, font_size=15)
 
     # Transform from data coordinates (scaled between xlim and ylim) to display coordinates
     tr_figure = ax.transData.transform
@@ -221,31 +208,32 @@ def main():
                 [xa - icon_center, ya - icon_center, icon_size, icon_size])
             a.imshow(B.nodes[n]["image"])
             a.axis("off")
-
         isInt = True
     plt.show()
 
 
 def getMasterKeywordList(objectArray: list):
-    masterKeywordList = {}
+    masterKeywordList = []
     for imageObject in objectArray:
         for kw in imageObject.getKeywords():
-            masterKeywordList[kw[0]] = kw[1]
+            if kw not in masterKeywordList:
+                masterKeywordList.append(kw)
     return masterKeywordList
 
 
 def setBottomNodes(keywordsList):
     for kw in keywordsList:
         bottomNodes.append(kw)
-        
+
+
 def getRandomImages():
-  randomImages = []
-  i = 0
-  while i < 5:
-    randomImages.append(random.randint(1,70))
-    i += 1
-  print(randomImages)
-  return randomImages
+    randomImages = []
+    i = 0
+    while i < 5:
+        randomImages.append(random.randint(1, 70))
+        i += 1
+    print(randomImages)
+    return randomImages
 
 
 def loadImages():

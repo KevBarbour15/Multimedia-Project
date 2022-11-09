@@ -9,11 +9,13 @@ from yake import KeywordExtractor
 import networkx as nx
 from networkx.algorithms import bipartite
 import matplotlib.pyplot as plt
+from nltk.stem import PorterStemmer
 import numpy as np
 import random
 import math
 import os
 import PIL
+import itertools
 
 LANGUAGE = "en"
 MAX_NGRAM_SIZE = 1  # Size of keywords, more than 1 to get phrases.
@@ -30,10 +32,12 @@ icons = {}
 
 
 class ImageObject:
-    def __init__(self, corpus=[], keywords = {}, id=-1):
+    def __init__(self, corpus=[], keywords={}, id=-1):
         self._corpus: list = corpus
         self._keywords: dict = keywords
         self._id: int = id
+        self._tfidf: float
+        self._similarityScore: float
 
     def getCorpus(self) -> list:
         return self._corpus
@@ -58,6 +62,18 @@ class ImageObject:
     def getImageID(self) -> int:
         return self._id
 
+    def addAverageTFIDF(self, tfidf):
+        self._tfidf = tfidf
+
+    def getAverageTFIDF(self) -> float:
+        return self._tfidf
+
+    def setSimilarityScore(self, score):
+        self._similarityScore = score
+
+    def getSimilarityScore(self) -> float:
+        return self._similarityScore
+
 
 def main():
     responseList = []
@@ -81,7 +97,6 @@ def main():
     processedResponsesList = []
 
     for idx in range(len(responseList)):
-        # print(preprocess_corpus(responseList[idx]))
         processedResponsesList.append(preprocess_corpus(responseList[idx]))
 
     lemmatizer = WordNetLemmatizer()
@@ -100,7 +115,6 @@ def main():
             return None
 
     for response in processedResponsesList:
-
         lemmatizedWords = []
         for word in response:
             tagged = pos_tag(word)
@@ -109,7 +123,6 @@ def main():
                 if posTagger(tup[1]) != None:
                     word = lemmatizer.lemmatize(tup[0], posTagger(tup[1]))
                     lemmatizedWords.append(word)
-
         lemmatziedResponsesList.append(lemmatizedWords)
 
     i = 1
@@ -123,6 +136,13 @@ def main():
 
         for kw in extractor.extract_keywords(object.getCorpusString()):
             object.getKeywords()[kw[0]] = kw[1]
+
+    i = 0
+    for response in processedResponsesList:
+        print(response)
+        imageObjectArray[i].setSimilarityScore(responseSimilarity(response))
+        print(imageObjectArray[i].getSimilarityScore())
+        i += 1
 
     i = 0
     for response in lemmatziedResponsesList:
@@ -144,11 +164,10 @@ def main():
 
             average /= j
             imageObjectArray[i].addKeyword(kw, average)
-        # imageObjectArray[i].addTFIDF(average)
-        
+        imageObjectArray[i].addAverageTFIDF(average)
         i += 1
 
-    #create lists of the top 5 of each end of variance
+    # create lists of the top 5 of each end of variance
     leastVariance = getLeast(imageObjectArray)
     mostVariance = getMost(imageObjectArray)
 
@@ -156,33 +175,33 @@ def main():
     leastVarianceNum = []
     mostVarianceNum = []
     for image in leastVariance:
-        leastVarianceNum.append(image.getTFIDF())
+        leastVarianceNum.append(image.getSimilarityScore())
     for image in mostVariance:
-        mostVarianceNum.append(image.getTFIDF())
+        mostVarianceNum.append(image.getSimilarityScore())
 
     leastImageNum = []
     mostImageNum = []
     for image in leastVariance:
-      leastImageNum.append("#{}".format(image.getImageID()))
+        leastImageNum.append("#{}".format(image.getImageID()))
     for image in mostVariance:
-      mostImageNum.append("#{}".format(image.getImageID()))
-  
-    labels = list(zip(leastImageNum,mostImageNum))
+        mostImageNum.append("#{}".format(image.getImageID()))
+
+    labels = list(zip(leastImageNum, mostImageNum))
     x = np.arange(len(labels))  # the label locations
     width = 0.35  # the width of the bars
     height = 0
 
     fig, ax = plt.subplots()
     least = ax.bar(x - width/2, leastVarianceNum,
-                    width, label='Least Variance', color="lightgrey")
+                   width, label='Least Variance', color="lightgrey")
     most = ax.bar(x + width/2, mostVarianceNum, width,
-                    label='Most Variance', color = "black")
-    
+                  label='Most Variance', color="black")
+
     # Add some text for labels, title and custom x-axis tick labels, etc.
-    ax.set_xlabel('Image Rankings from 5  ----->  1')
-    ax.set_ylabel('Average TF-IDF Score')
+    ax.set_xlabel('Image Rankings from 10  ----->  1')
+    ax.set_ylabel('Average Similarity Score')
     ax.set_title(
-        'Top 5 Images with the Least Variance and Most Variance sorted by average TF-IDF of response')
+        'Top 10 Images with the Least Variance and Most Variance sorted by average cosine similarity of response')
     ax.set_xticks(x, labels)
     ax.legend()
 
@@ -190,30 +209,26 @@ def main():
     ax.bar_label(most, padding=3)
     plt.show()
 
-    for x in imageObjectArray:
-        print(x.getTFIDF())
-
 
 def getMasterKeywordList(objectArray: list):
     masterKeywordList = {}
     for imageObject in imageObjectArray:
         for kw in imageObject.getKeywords():
             masterKeywordList[kw[0]] = kw[1]
-
     return masterKeywordList
 
 
 def getLeast(obarr):
     responseList = obarr
     final_list = []
-    for i in range(0, 5):
+    for i in range(0, 10):
         max1 = 0
         for j in range(len(responseList)):
-            tfidf = float(responseList[j].getTFIDF())
+            sim = float(responseList[j].getSimilarityScore())
             if max1 == 0:
                 max1 = responseList[j]
             else:
-                if tfidf > max1.getTFIDF():
+                if sim > max1.getSimilarityScore():
                     max1 = responseList[j]
 
         responseList.remove(max1)
@@ -226,14 +241,14 @@ def getLeast(obarr):
 def getMost(obarr):
     responseList = obarr
     final_list = []
-    for i in range(0, 5):
+    for i in range(0, 10):
         max1 = 0
         for j in range(len(responseList)):
-            tfidf = float(responseList[j].getTFIDF())
+            sim = float(responseList[j].getSimilarityScore())
             if max1 == 0:
                 max1 = responseList[j]
             else:
-                if tfidf < max1.getTFIDF():
+                if sim < max1.getSimilarityScore():
                     max1 = responseList[j]
 
         responseList.remove(max1)
@@ -261,7 +276,42 @@ def loadImages():
             pathname, extension = os.path.splitext(f)
             fname = pathname.split('/')
             icons[fname[-1]] = f
-            
+
+
+def responseSimilarity(responseList):
+    ps = PorterStemmer()
+    responseTotal = 0
+    comparisons = 0
+    for a, b in itertools.combinations(responseList, 2):
+        responseStemmed = {ps.stem(w) for w in a}
+        nextResponseStemmed = {ps.stem(w) for w in b}
+        comparisons += 1
+        l1 = []
+        l2 = []
+
+        # form a set containing keywords of both strings
+        rvector = responseStemmed.union(nextResponseStemmed)
+
+        for w in rvector:
+            if w in responseStemmed:
+                l1.append(1)  # create a vector
+            else:
+                l1.append(0)
+            if w in nextResponseStemmed:
+                l2.append(1)
+            else:
+                l2.append(0)
+
+        c = 0
+
+        for i in range(len(rvector)):
+            c += l1[i]*l2[i]
+        cosine = c / float((sum(l1)*sum(l2))**0.5)
+        responseTotal += cosine
+
+    average = (responseTotal/comparisons)
+    return average
+
 
 if __name__ == "__main__":
     main()
