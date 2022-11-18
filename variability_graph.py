@@ -61,13 +61,7 @@ class ImageObject:
 
     def getImageID(self) -> int:
         return self._id
-
-    def addAverageTFIDF(self, tfidf):
-        self._tfidf = tfidf
-
-    def getAverageTFIDF(self) -> float:
-        return self._tfidf
-
+      
     def setSimilarityScore(self, score):
         self._similarityScore = score
 
@@ -164,7 +158,6 @@ def main():
 
             average /= j
             imageObjectArray[i].addKeyword(kw, average)
-        imageObjectArray[i].addAverageTFIDF(average)
         i += 1
 
     # create lists of the top 5 of each end of variance

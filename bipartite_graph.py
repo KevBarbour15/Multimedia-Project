@@ -86,7 +86,7 @@ def main():
     processedResponsesList = []
 
     for idx in range(len(responseList)):
-        # print(preprocess_corpus(responseList[idx]))
+        print(preprocess_corpus(responseList[idx]))
         processedResponsesList.append(preprocess_corpus(responseList[idx]))
 
     lemmatizer = WordNetLemmatizer()
@@ -176,7 +176,7 @@ def main():
 
     nx.draw(B, pos=pos, with_labels=True, node_color=(0.8, 0.8, 0.8),
             edge_color=edgeColors, width=edgeWeight)
-    plt.show()
+    #plt.show()
 
 
 def getMasterKeywordList(objectArray: list):
@@ -235,6 +235,8 @@ def randomColor():
         rgb = [r, g, b]
     return rgb
 
+def useNgrams():
+  print("Time to use some Ngrams")
 
 if __name__ == "__main__":
     main()
