@@ -1,29 +1,15 @@
-import os
-import pandas as pd
-from nltk.tokenize import PunktSentenceTokenizer
-import nltk
 
+from nltk import word_tokenize, pos_tag, ne_chunk, sent_tokenize
 
 def main():
-    responseObjectList = []
-    annotations = ["/annotations/Image_Annotations_Set_1.csv",
-                   "/annotations/Image_Annotations_Set_2.csv",
-                   "/annotations/Image_Annotations_Set_3.csv"]
 
-    for file in annotations:
-        df = pd.read_csv(os.getcwd() + file)
-        rli = [df[str(col + 1)] for col in range(df.shape[1] - 1)]
-        responseObjectList.extend(rli)
+    sentences_array = ["A giant squad attacking New York City.", "A LEGO figure of Batman.", "Micheal Jackson at McDonalds"]
 
-    for responseObject in responseObjectList:
-        for response in responseObject:
-            words = nltk.word_tokenize(response)
-            tagged = nltk.pos_tag(words)
-            chunkGram = r"""Chunk: {<NNP>+<NN>?}"""
-            chunkParser = nltk.RegexpParser(chunkGram)
-            chunked = chunkParser.parse(tagged)
-            chunked.draw()
-
+    for sentence in sentences_array:
+        for sent in sent_tokenize(sentence):
+            for chunk in ne_chunk(pos_tag(word_tokenize(sent))):
+                if hasattr(chunk, 'label'):
+                    print(chunk.label(), ' '.join(c[0] for c in chunk))
 
 
 if __name__ == "__main__":
