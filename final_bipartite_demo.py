@@ -170,6 +170,7 @@ def main():
         isInt = True
     
     plt.show()
+    
 # ------------------------------------------------------------- #
 
 def extract_chunks(response_set: str) -> dict:

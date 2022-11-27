@@ -155,11 +155,19 @@ def main():
     ax.bar_label(most, padding=3)
     plt.show()
 
+    images_with_animals = [19, 45, 23]
+
+
+def getAverageScore(picList):
+  total = 0
+  for image in picList:
+    total += image.getSimilarityScore()
+  
+  return total
 
 def setResponseSimilarity(count,responseSet, responseSynSet):
     score = 0.0
     count = 0
-    arb = 0
     # first check for matching words before checking for synonyms to catch names that do not have "synonyms"
     for s1, s2 in itertools.combinations(responseSet, 2):
         for s in s1:
@@ -170,13 +178,11 @@ def setResponseSimilarity(count,responseSet, responseSynSet):
 
     for s1, s2 in itertools.combinations(responseSynSet, 2):
         # filter out the nones:
-
         synsets1 = [ss for ss in s1 if ss]
         synsets2 = [ss for ss in s2 if ss]
 
         for synset in synsets1:
             # Get the similarity value of the most similar word in the other sentence
-
             try:
                 best_score = max([synset.path_similarity(ss)
                                  for ss in synsets2])
@@ -187,12 +193,10 @@ def setResponseSimilarity(count,responseSet, responseSynSet):
             if best_score is not None:
                 score += best_score
                 count += 1
-
     score = score / count
     score = round(score, 3)
     print("IMAGE{}, SCORE {}".format(count,score))
     return score
-
 
 def getLeast(obarr):
     responseList = obarr
@@ -232,7 +236,6 @@ def getMost(obarr):
 
     final_list.reverse()
     return final_list
-
 
 if __name__ == "__main__":
     main()
