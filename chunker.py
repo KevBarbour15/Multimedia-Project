@@ -3,7 +3,7 @@ from nltk import word_tokenize, pos_tag, ne_chunk, sent_tokenize
 
 def main():
 
-    sentences_array = ["A giant squad attacking New York City.", "A LEGO figure of Batman.", "Micheal Jackson at McDonalds"]
+    sentences_array = ["A giant squad attacking New York City.", "A LEGO figure of Batman.", "Michael Jackson at McDonalds"]
 
     for sentence in sentences_array:
         for sent in sent_tokenize(sentence):

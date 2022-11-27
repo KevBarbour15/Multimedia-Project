@@ -121,11 +121,12 @@ def main():
                     lemmatizedWords.append(word)
             
             responseSetAfterLem.append(responseAfterLem)
-  
+        print(responseSetAfterLem)
         lemmatizedResponsesList.append(lemmatizedWords)
         DF = getDF(responseSetAfterLem)
         TFIDF = getTFIDF(responseSetAfterLem, DF)
         responsesWithTfidf.append(TFIDF)
+        print(responsesWithTfidf)
         
         
     i = 1
@@ -234,9 +235,6 @@ def randomColor():
         b = random.randint(0, 255)
         rgb = [r, g, b]
     return rgb
-
-def useNgrams():
-  print("Time to use some Ngrams")
 
 if __name__ == "__main__":
     main()

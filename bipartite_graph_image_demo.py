@@ -28,8 +28,9 @@ bottomNodes = []
 edgesArray = []
 icons = {}
 
+
 class ImageObject:
-    def __init__(self, corpus=[], keywords={}, id=-1, keywordstfidf = {}):
+    def __init__(self, corpus=[], keywords={}, id=-1, keywordstfidf={}):
         self._corpus: list = corpus
         self._keywords: dict = keywords
         self._id: int = id
@@ -42,7 +43,6 @@ class ImageObject:
         """
         Return the corpus as a single string.
         """
-
         string = ""
         for word in self._corpus:
             string = string + " " + word
@@ -55,11 +55,11 @@ class ImageObject:
     def getKeywords(self) -> dict:
         return self._keywords
 
-    def addKeywordTfidf(self,key, val) -> None:
+    def addKeywordTfidf(self, key, val) -> None:
         self._keywordstfidf[key] = val
-        
+
     def getKeywordsTfidf(self) -> dict:
-      return self._keywordstfidf
+        return self._keywordstfidf
 
     def getImageID(self) -> int:
         return self._id
@@ -87,7 +87,7 @@ def main():
     processedResponsesList = []
 
     for idx in range(len(responseList)):
-        #print(preprocess_corpus(responseList[idx]))
+        # print(preprocess_corpus(responseList[idx]))
         processedResponsesList.append(preprocess_corpus(responseList[idx]))
 
     lemmatizer = WordNetLemmatizer()
@@ -104,34 +104,34 @@ def main():
             return wordnet.ADV
         else:
             return None
-    
+
     responsesWithTfidf = []
     for responses in processedResponsesList:
         lemmatizedWords = []
         responseSetAfterLem = []
-        
+
         for response in responses:
             tagged = pos_tag(response)
             responseAfterLem = []
-  
+
             for tup in tagged:
-    
+
                 if posTagger(tup[1]) != None:
                     word = lemmatizer.lemmatize(tup[0], posTagger(tup[1]))
                     responseAfterLem.append(word)
                     lemmatizedWords.append(word)
-            
+
             responseSetAfterLem.append(responseAfterLem)
-  
+
         lemmatizedResponsesList.append(lemmatizedWords)
         DF = getDF(responseSetAfterLem)
         TFIDF = getTFIDF(responseSetAfterLem, DF)
         responsesWithTfidf.append(TFIDF)
-        
-        
+
     i = 1
     for lemmatizedResponse in lemmatizedResponsesList:
-        imageObjectArray.append(ImageObject(lemmatizedResponse, {}, i, responsesWithTfidf[i-1]))
+        imageObjectArray.append(ImageObject(
+            lemmatizedResponse, {}, i, responsesWithTfidf[i-1]))
         i += 1
 
     for object in imageObjectArray:
@@ -148,7 +148,7 @@ def main():
     # initialize the graph and set the bottom nodes of keywords
     B = nx.Graph()
     setBottomNodes(getMasterKeywordList(imageObjectArray))
-  
+
     demoImages = getRandomImages()
     #demoImages = [1,10,19,39,67]
 
@@ -187,7 +187,7 @@ def main():
     edgeColors = [B[u][v]['color'] for u, v in edges]
     edgeWeight = [B[u][v]['weight'] for u, v in edges]
     nx.draw(B, pos=pos, with_labels=True, node_color=(0.8, 0.8, 0.8),
-            edge_color=edgeColors, font_size=15,width = edgeWeight)
+            edge_color=edgeColors, font_size=15, width=edgeWeight)
 
     # Transform from data coordinates (scaled between xlim and ylim) to display coordinates
     tr_figure = ax.transData.transform
@@ -216,6 +216,8 @@ def main():
         isInt = True
     plt.show()
 
+# ----------------------------------------------------------------
+
 
 def getMasterKeywordList(objectArray: list):
     masterKeywordList = []
@@ -231,38 +233,40 @@ def setBottomNodes(keywordsList):
         bottomNodes.append(kw)
 
 # returns a dict of the keywords and their respective count in the response set
+
+
 def getDF(responsesList):
-  DF = {}
-  for i in range(len(responsesList)):
-    tokens = responsesList[i]
-    for w in tokens:
-        try:
-            DF[w].add(i)
-        except:
-            DF[w] = {i}
-  for i in DF:
-      DF[i] = len(DF[i])
-  return DF
+    DF = {}
+    for i in range(len(responsesList)):
+        tokens = responsesList[i]
+        for w in tokens:
+            try:
+                DF[w].add(i)
+            except:
+                DF[w] = {i}
+    for i in DF:
+        DF[i] = len(DF[i])
+    return DF
+
 
 def getTFIDF(responsesList, DF):
-  tf_idf = {}
-  
-  for response in responsesList:
-    tokens = response
-    counter = Counter(tokens + response)
-    for token in np.unique(tokens):
-        #print("Word: {}".format(token))
-        tf = counter[token]/len(response)
-        #print("TF: {}".format(tf))
-        df = DF[token]
-        #print("DF: {}".format(df))
-        idf = np.log(len(responsesList)/(df))
-        #print("IDF: {}".format(idf))
-        tf_idf[token] = tf*idf
-        #print("TF_IDF: {}".format(tf_idf[token]))
-  
-  return tf_idf
-  
+    tf_idf = {}
+
+    for response in responsesList:
+        tokens = response
+        counter = Counter(tokens + response)
+        for token in np.unique(tokens):
+            #print("Word: {}".format(token))
+            tf = counter[token]/len(response)
+            #print("TF: {}".format(tf))
+            df = DF[token]
+            #print("DF: {}".format(df))
+            idf = np.log(len(responsesList)/(df))
+            #print("IDF: {}".format(idf))
+            tf_idf[token] = tf*idf
+            #print("TF_IDF: {}".format(tf_idf[token]))
+    return tf_idf
+
 
 def getRandomImages():
     randomImages = []
@@ -270,7 +274,7 @@ def getRandomImages():
     while i < 5:
         randomImages.append(random.randint(1, 70))
         i += 1
-    #print(randomImages)
+    # print(randomImages)
     return randomImages
 
 
@@ -282,11 +286,6 @@ def loadImages():
             pathname, extension = os.path.splitext(f)
             fname = pathname.split('/')
             icons[fname[-1]] = f
-
-
-def parseName(filename):
-    x = filename.split('/')
-    return x
 
 
 def randomColor():

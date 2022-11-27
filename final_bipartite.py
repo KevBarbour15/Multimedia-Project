@@ -5,7 +5,13 @@ from nltk import word_tokenize, pos_tag, ne_chunk, sent_tokenize
 from nltk.corpus import stopwords, wordnet
 from nltk.stem import WordNetLemmatizer
 from yake import KeywordExtractor
-
+import networkx as nx
+from networkx.algorithms import bipartite
+import matplotlib.pyplot as plt
+import numpy as np
+import random
+import math
+import os
 
 STOPWORDS = set(stopwords.words("english"))
 LANGUAGE = "en"
@@ -18,12 +24,23 @@ chunk_master_dict = {}
 chunk_master_list = []
 
 image_object_array = []
+top_nodes = []
+bottom_nodes = []
+
+icons = {}
 
 
 class ImageObject:
-    def __init__(self, responses=[], keywords=[]):
+    def __init__(self, responses=[], keywords=[], id=-1):
         self._responses: list = responses
         self._keywords: list = keywords
+        self._id: int = id
+
+    def get_image_id(self) -> int:
+        return self._id
+
+    def get_keywords(self) -> list:
+        return self._keywords
 
 
 def main():
@@ -32,7 +49,7 @@ def main():
     response_list = []
 
     annotations = ["/annotations/Image_Annotations_Set_1.csv",
-                   "/annotations/Image_Annotations_Set_2.csv", 
+                   "/annotations/Image_Annotations_Set_2.csv",
                    "/annotations/Image_Annotations_Set_3.csv"]
 
     for file in annotations:
@@ -41,25 +58,27 @@ def main():
         response_list.extend(rli)
 
     processed_response_sets = []
-
+    responses_with_tfidf = []
+    
     idx = 1
     for response_set in response_list:
-
+        
         for chunk in extract_chunks(response_set):
             chunk_master_dict[chunk] = ''
-
+        
         chunk_master_list = list(chunk_master_dict.keys())
-        chunk_master_list = [chunk for chunk in chunk_master_list if " " in chunk]
+        chunk_master_list = [
+            chunk for chunk in chunk_master_list if " " in chunk]
 
         extractor = KeywordExtractor(
-                    lan=LANGUAGE, 
-                    n=MAX_NGRAM_SIZE, 
-                    dedupLim=DEDUPLICATION_THRESHSOLD, 
-                    top=NUM_OF_KEYWORDS, 
-                    features=None)
-
+            lan=LANGUAGE,
+            n=MAX_NGRAM_SIZE,
+            dedupLim=DEDUPLICATION_THRESHSOLD,
+            top=NUM_OF_KEYWORDS,
+            features=None)
 
         keywords = []
+        responses_final = []
         for response in response_set:
             raw_keywords_set = extractor.extract_keywords(response)
 
@@ -71,19 +90,54 @@ def main():
                     if kw in chunk:
                         kw = chunk
 
-                new_keyword_set.append(kw)
+                new_keyword_set.append(kw.lower())
                 new_keyword_set = [*set(new_keyword_set)]
-
+            
             keywords.append(new_keyword_set)
-
-            processed_response = [process_text(response) for response in response_set]
+            processed_response = [process_text(
+                response) for response in response_set]
             processed_response_sets.append(processed_response)
-                   
-        image_object_array.append(ImageObject(response_set, new_keyword_set))
+            print(new_keyword_set)
+            
+        image_object_array.append(ImageObject(
+            response_set, new_keyword_set, idx))
+        idx += 1
 
-    for obj in image_object_array:
-        print(obj._keywords)
+    B = nx.Graph()
+    bottom_nodes = get_master_kw_list(image_object_array)
 
+    i = 1
+    for image_object in image_object_array:
+        keywords = image_object.get_keywords()
+        top_nodes.append(i)
+        color = random_color()
+        for kw in keywords:
+            if kw in bottom_nodes:
+                B.add_edge(i, kw, color=color)
+        i += 1
+
+    left, right = nx.bipartite.sets(B, top_nodes=top_nodes)
+    pos = {}
+
+    # Update position for node from each group
+    i = len(right) * 3.475
+    for node in right:
+        pos[node] = (2, i)
+        i -= 3.75
+
+    i = (len(top_nodes) * 7)
+    for node in left:
+        pos[node] = (1, i)
+        i -= 7.5
+
+    edges = B.edges()
+    edge_colors = [B[u][v]['color'] for u, v in edges]
+
+    nx.draw(B, pos=pos, with_labels=True, node_color=(0.8, 0.8, 0.8),
+            edge_color=edge_colors)
+
+    plt.show()
+# ------------------------------------------------------------- #
 
 def extract_chunks(response_set: str) -> dict:
     chunked_token = ""
@@ -94,12 +148,12 @@ def extract_chunks(response_set: str) -> dict:
             for chunk in ne_chunk(pos_tag(word_tokenize(sent))):
                 if hasattr(chunk, 'label'):
                     chunked_token = ' '.join(c[0] for c in chunk)
-                    
+
         chunk_dict[chunked_token] = ""
 
     return chunk_dict
 
-    
+
 def process_text(text: str) -> list:
     tagged = pos_tag(word_tokenize(text))
     lemmatizer = WordNetLemmatizer()
@@ -111,9 +165,9 @@ def process_text(text: str) -> list:
             result = lemmatizer.lemmatize(tup[0], pos_sorter(tup[1]))
             lemmatized_words.append(result)
 
-    processed_tokens = [word for word in lemmatized_words 
-            if word not in STOPWORDS and not 
-            word.isdigit() and word not in punctuation]
+    processed_tokens = [word for word in lemmatized_words
+                        if word not in STOPWORDS and not
+                        word.isdigit() and word not in punctuation]
 
     return processed_tokens
 
@@ -129,6 +183,28 @@ def pos_sorter(word_tag):
         return wordnet.ADV
     else:
         return None
+
+# create a master list of the keywords without duplicates for graphing
+# the bottom nodes
+
+
+def get_master_kw_list(objectArray: list):
+    master_kw_list = []
+    for image_object in image_object_array:
+        for kw in image_object.get_keywords():
+            if kw not in master_kw_list:
+                master_kw_list.append(kw)
+    return master_kw_list
+
+
+def random_color():
+    rgb = []
+    for i in range(3):
+        r = random.randint(0, 255)
+        g = random.randint(0, 255)
+        b = random.randint(0, 255)
+        rgb = [r, g, b]
+    return rgb
 
 
 if __name__ == "__main__":

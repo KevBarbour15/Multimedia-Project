@@ -21,7 +21,7 @@ LANGUAGE = "en"
 MAX_NGRAM_SIZE = 1  # Size of keywords, more than 1 to get phrases.
 # Rate to avoid like-terms when picking out keywords. Should be less than 1.
 DEDUPLICATION_THRESHSOLD = 0.9
-NUM_OF_KEYWORDS = 5  # Number of keywords to retrieve per corpus.
+NUM_OF_KEYWORDS = 6  # Number of keywords to retrieve per corpus.
 
 imageObjectArray = []
 topNodes = []
@@ -32,27 +32,23 @@ icons = {}
 
 
 class ImageObject:
-    def __init__(self, id, responseSet, responseSynSet):
+    def __init__(self, id, responseSet, responseSynSet, similarityScore):
         self._id: int = id
-        self._similarityScore: float
+        self._similarityScore: float = similarityScore
         self.__responseSet: dict = responseSet
         self.__responseSynSet: dict = responseSynSet
 
     def getImageID(self) -> int:
         return self._id
 
-    def setSimilarityScore(self, score):
-        self._similarityScore = score
-
     def getSimilarityScore(self) -> float:
         return self._similarityScore
 
     def getResponseSet(self) -> dict:
         return self.__responseSet
-      
+
     def getResponseSynSet(self) -> dict:
         return self.__responseSynSet
-    
 
 
 def main():
@@ -111,27 +107,68 @@ def main():
                 synsetResponse.append(taggedSynset(word))
             responseSynSet.append(synsetResponse)
         synsetResponseList.append(responseSynSet)
-        imageObjectArray.append(ImageObject(i, responseSet, responseSynSet))
+        
+        similarityScore = setResponseSimilarity(i,responseSet,responseSynSet)
+        imageObjectArray.append(ImageObject(i, responseSet, responseSynSet, similarityScore))
         i += 1
 
-    for imageObject in imageObjectArray:
-      setResponseSimilarity(imageObject)
 
-
-def setResponseSimilarity(image):
+    leastVariance = getLeast(imageObjectArray)
+    mostVariance = getMost(imageObjectArray)
     
+    # add the TFIDF score to lists for graph
+    leastVarianceNum = []
+    mostVarianceNum = []
+    for image in leastVariance:
+        leastVarianceNum.append(image.getSimilarityScore())
+    for image in mostVariance:
+        mostVarianceNum.append(image.getSimilarityScore())
+    
+    # create a list of the top 10 of image # for each end of variance with 
+    leastImageNum = []
+    mostImageNum = []
+    for image in leastVariance:
+        leastImageNum.append("#{}".format(image.getImageID()))
+    for image in mostVariance:
+        mostImageNum.append("#{}".format(image.getImageID()))
+
+    labels = list(zip(leastImageNum, mostImageNum))
+    x = np.arange(len(labels))  # the label locations
+    width = 0.35  # the width of the bars
+    height = 0
+
+    fig, ax = plt.subplots()
+    least = ax.bar(x - width/2, leastVarianceNum,
+                   width, label='Least Variance', color="lightgrey")
+    most = ax.bar(x + width/2, mostVarianceNum, width,
+                  label='Most Variance', color="black")
+
+    # Add some text for labels, title and custom x-axis tick labels, etc.
+    ax.set_xlabel('Image Rankings from 10  ----->  1')
+    ax.set_ylabel('Average Similarity Score')
+    ax.set_title(
+        'Top 10 Images with the Least Variance and Most Variance sorted by average cosine similarity of response')
+    ax.set_xticks(x, labels)
+    ax.legend()
+
+    ax.bar_label(least, padding=3)
+    ax.bar_label(most, padding=3)
+    plt.show()
+
+
+def setResponseSimilarity(count,responseSet, responseSynSet):
     score = 0.0
     count = 0
     arb = 0
     # first check for matching words before checking for synonyms to catch names that do not have "synonyms"
-    for s1, s2 in itertools.combinations(image.getResponseSet(), 2):
-      for s in s1:
-        if s in s2:
-          score += 1
-          count += 1
-          arb += 1
-          
-    for s1, s2 in itertools.combinations(image.getResponseSynSet(), 2):
+    for s1, s2 in itertools.combinations(responseSet, 2):
+        for s in s1:
+            if s in s2:
+                score += 1
+                count += 1
+                arb += 1
+
+    for s1, s2 in itertools.combinations(responseSynSet, 2):
         # filter out the nones:
 
         synsets1 = [ss for ss in s1 if ss]
@@ -153,8 +190,48 @@ def setResponseSimilarity(image):
 
     score = score / count
     score = round(score, 3)
-    print("IMAGE{}, SCORE {}".format(image.getImageID(),score)) 
-    return score 
+    print("IMAGE{}, SCORE {}".format(count,score))
+    return score
+
+
+def getLeast(obarr):
+    responseList = obarr
+    final_list = []
+    for i in range(0, 10):
+        max1 = 0
+        for j in range(len(responseList)):
+            sim = float(responseList[j].getSimilarityScore())
+            if max1 == 0:
+                max1 = responseList[j]
+            else:
+                if sim > max1.getSimilarityScore():
+                    max1 = responseList[j]
+
+        responseList.remove(max1)
+        final_list.append(max1)
+
+    final_list.reverse()
+    return final_list
+
+
+def getMost(obarr):
+    responseList = obarr
+    final_list = []
+    for i in range(0, 10):
+        max1 = 0
+        for j in range(len(responseList)):
+            sim = float(responseList[j].getSimilarityScore())
+            if max1 == 0:
+                max1 = responseList[j]
+            else:
+                if sim < max1.getSimilarityScore():
+                    max1 = responseList[j]
+
+        responseList.remove(max1)
+        final_list.append(max1)
+
+    final_list.reverse()
+    return final_list
 
 
 if __name__ == "__main__":
