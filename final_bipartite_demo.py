@@ -93,7 +93,6 @@ def main():
 
                 new_keyword_set.append(kw.lower())
                 new_keyword_set = [*set(new_keyword_set)]
-                #print(new_keyword_set) 
             keywords.append(new_keyword_set)
             processed_response = [process_text(
                 response) for response in response_set]
@@ -126,15 +125,17 @@ def main():
     pos = {}
 
     # Update position for node from each group
+    print(len(right)*3.475)
     i = len(right) * 3.475
     for node in right:
         pos[node] = (2, i)
         i -= 3.75
-
-    i = (len(top_nodes) * 7)
+    
+    print(len(top_nodes) * 7)
+    i = (len(top_nodes) * 9.25)
     for node in left:
         pos[node] = (1, i)
-        i -= 7.5
+        i -= 9
         
     fig, ax = plt.subplots()
     edges = B.edges()
@@ -170,7 +171,7 @@ def main():
         isInt = True
     
     plt.show()
-    
+    print(len(image_object_array))
 # ------------------------------------------------------------- #
 
 def extract_chunks(response_set: str) -> dict:

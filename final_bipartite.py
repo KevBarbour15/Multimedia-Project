@@ -135,8 +135,9 @@ def main():
 
     nx.draw(B, pos=pos, with_labels=True, node_color=(0.8, 0.8, 0.8),
             edge_color=edge_colors)
-
+ 
     plt.show()
+    
 # ------------------------------------------------------------- #
 
 def extract_chunks(response_set: str) -> dict:

@@ -2,19 +2,11 @@ import pandas as pd
 from nltk.tokenize import word_tokenize
 from nltk.corpus import stopwords
 from string import punctuation
-from nltk.stem import WordNetLemmatizer
 from nltk.corpus import wordnet
 from nltk import pos_tag
-from yake import KeywordExtractor
-import networkx as nx
-from networkx.algorithms import bipartite
 import matplotlib.pyplot as plt
-from nltk.stem import PorterStemmer
 import numpy as np
-import random
-import math
 import os
-import PIL
 import itertools
 
 LANGUAGE = "en"
@@ -29,7 +21,6 @@ bottomNodes = []
 edgesArray = []
 
 icons = {}
-
 
 class ImageObject:
     def __init__(self, id, responseSet, responseSynSet, similarityScore):
@@ -95,7 +86,7 @@ def main():
             return wordnet.synsets(word[0], wn_tag)[0]
         except:
             return None
-
+    
     synsetResponseList = []
     i = 1
     for responseSet in processedResponsesList:
@@ -107,15 +98,15 @@ def main():
                 synsetResponse.append(taggedSynset(word))
             responseSynSet.append(synsetResponse)
         synsetResponseList.append(responseSynSet)
-        
-        similarityScore = setResponseSimilarity(i,responseSet,responseSynSet)
-        imageObjectArray.append(ImageObject(i, responseSet, responseSynSet, similarityScore))
-        i += 1
 
+        similarityScore = setResponseSimilarity(i, responseSet, responseSynSet)
+        imageObjectArray.append(ImageObject(
+            i, responseSet, responseSynSet, similarityScore))
+        i += 1
 
     leastVariance = getLeast(imageObjectArray)
     mostVariance = getMost(imageObjectArray)
-    
+
     # add the TFIDF score to lists for graph
     leastVarianceNum = []
     mostVarianceNum = []
@@ -123,8 +114,8 @@ def main():
         leastVarianceNum.append(image.getSimilarityScore())
     for image in mostVariance:
         mostVarianceNum.append(image.getSimilarityScore())
-    
-    # create a list of the top 10 of image # for each end of variance with 
+
+    # create a list of the top 10 of image # for each end of variance with
     leastImageNum = []
     mostImageNum = []
     for image in leastVariance:
@@ -147,7 +138,7 @@ def main():
     ax.set_xlabel('Image Rankings from 10  ----->  1')
     ax.set_ylabel('Average Similarity Score')
     ax.set_title(
-        'Top 10 Images with the Least Variance and Most Variance sorted by average cosine similarity of response')
+        'Top 10 Images with the Least Variance and Most Variance')
     ax.set_xticks(x, labels)
     ax.legend()
 
@@ -155,17 +146,63 @@ def main():
     ax.bar_label(most, padding=3)
     plt.show()
 
-    images_with_animals = [19, 45, 23]
+    # lists containing the image numbers of images that correspond to the theme
+    animal_pics = [1, 4, 6, 16, 18, 19, 21, 23, 39,
+                   41, 44, 46, 47, 48, 49, 51, 55, 57, 58, 62, 69, 70]
+    specific_location_pics = [2, 13, 21, 30, 34, 47, 51, 54, 61, 64, 68, 69]
+    setting_pics = [5, 6, 17, 23, 36, 39, 46, 53, 56, 57, 58, 59, 60, 64]
+    color_pics = [1, 2, 9, 18, 21, 42, 43, 46, 49, 54, 56, 59, 60, 69]
+    people_pics = [3, 25, 26, 28, 29, 30, 33,
+                   34, 38, 47, 55, 61, 62, 64, 66, 67]
+    transportation_pics = [2, 3, 7, 16, 43, 50, 52, 54, 56, 62]
+    action_pics = [1, 4, 5, 7, 8, 9, 10, 16,
+                   19, 20, 25, 28, 29, 51, 52, 61, 66]
+    artist_pics = [11, 12, 41, 48, 49, 62]
+    tv_movie_pics = [15, 22, 24, 28, 31, 35, 37, 45, 50, 55, 67]
+    food_pics = [9, 11, 13, 20, 37, 42, 45, 60, 64]
+    weather_pics = [17, 36, 43, 44, 56, 58, 59]
+    attire_pics = [8, 23, 24, 31, 32, 33, 34]
+    legos_pics = [14, 26, 42, 68]
+    blackcat_pics = [1, 23, 46, 69]
+    pixar_pics = [15, 35, 37, 50]
+    santa_pics = [3, 24, 28, 33, 34, 38, 61, 65]
+    beetle_pics = [18, 43, 44, 56]
+    jesus_pics = [25, 26, 27, 29, 30]
+
+    results_list = [animal_pics, setting_pics, color_pics,
+                    transportation_pics, action_pics, tv_movie_pics, food_pics, weather_pics, attire_pics,
+                    legos_pics, blackcat_pics, pixar_pics, santa_pics, beetle_pics, artist_pics, people_pics, jesus_pics, specific_location_pics]
+
+    categories = ["Animals", "Setting", "Colors",
+                  "Transportation", "Actions / Activities", "Television / Movies", "Food", "Weather", "Attire", "Legos",
+                  "Black Cats", "Pixar Movies", "Santa Claus", "Beetles", "Famous Artist Styles", "Famous People", "Jesus", "Notable Locations"]
+
+    # display final results (average score of each category)
+    displayFinalResults(results_list, categories)
+
+#----------------------------------------------------------------#
 
 
-def getAverageScore(picList):
-  total = 0
-  for image in picList:
-    total += image.getSimilarityScore()
-  
-  return total
+def displayFinalResults(results_list, categories):
+    print("\n\n\n\n")
+    print("***** Finals Results of General Categories *****")
+    print()
+    idx = 0
+    for category in results_list:
+        total = 0
+        if idx == 9:
+            print("\n***** Final Results of Specific Categories *****\n")
+            
+        for pic in category:
+            total += imageObjectArray[pic - 1].getSimilarityScore()
+        total = total / len(category)
+        print(
+            "-- Category: {} -- Score: {}".format(categories[idx], round(total, 3)))
+        print()
+        idx += 1
 
-def setResponseSimilarity(count,responseSet, responseSynSet):
+
+def setResponseSimilarity(imageNum, responseSet, responseSynSet):
     score = 0.0
     count = 0
     # first check for matching words before checking for synonyms to catch names that do not have "synonyms"
@@ -174,7 +211,6 @@ def setResponseSimilarity(count,responseSet, responseSynSet):
             if s in s2:
                 score += 1
                 count += 1
-                arb += 1
 
     for s1, s2 in itertools.combinations(responseSynSet, 2):
         # filter out the nones:
@@ -194,12 +230,13 @@ def setResponseSimilarity(count,responseSet, responseSynSet):
                 score += best_score
                 count += 1
     score = score / count
-    score = round(score, 3)
-    print("IMAGE{}, SCORE {}".format(count,score))
+    score = round(score,5)
+    print("IMAGE{}, SCORE {}".format(imageNum, score))
     return score
 
+
 def getLeast(obarr):
-    responseList = obarr
+    responseList = obarr.copy()
     final_list = []
     for i in range(0, 10):
         max1 = 0
@@ -219,7 +256,7 @@ def getLeast(obarr):
 
 
 def getMost(obarr):
-    responseList = obarr
+    responseList = obarr.copy()
     final_list = []
     for i in range(0, 10):
         max1 = 0
@@ -236,6 +273,7 @@ def getMost(obarr):
 
     final_list.reverse()
     return final_list
+
 
 if __name__ == "__main__":
     main()

@@ -61,7 +61,7 @@ class ImageObject:
 
     def getImageID(self) -> int:
         return self._id
-      
+
     def setSimilarityScore(self, score):
         self._similarityScore = score
 
@@ -171,8 +171,8 @@ def main():
         leastVarianceNum.append(image.getSimilarityScore())
     for image in mostVariance:
         mostVarianceNum.append(image.getSimilarityScore())
-    
-    # create a list of the top 10 of image # for each end of variance with 
+
+    # create a list of the top 10 of image # for each end of variance with
     leastImageNum = []
     mostImageNum = []
     for image in leastVariance:
@@ -287,16 +287,16 @@ def responseSimilarity(responseList):
         rvector = responseStemmed.union(nextResponseStemmed)
 
         for w in rvector:
-                    
+
             if w in responseStemmed:
                 l1.append(1)  # create a vector
             else:
-                l1.append(0)  
+                l1.append(0)
             if w in nextResponseStemmed:
                 l2.append(1)
             else:
                 l2.append(0)
-            ### check if either response has a synonym 
+            # check if either response has a synonym
 
         c = 0
 
