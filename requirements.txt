@@ -1,0 +1,7 @@
+pandas
+networkx[default]
+numpy
+nltk
+yake
+Pillow
+matplotlib

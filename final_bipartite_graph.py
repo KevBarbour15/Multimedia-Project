@@ -10,8 +10,6 @@ from networkx.algorithms import bipartite
 import matplotlib.pyplot as plt
 import numpy as np
 import random
-import math
-import os
 
 STOPWORDS = set(stopwords.words("english"))
 LANGUAGE = "en"
