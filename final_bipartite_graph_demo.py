@@ -60,13 +60,13 @@ def main():
 
     processed_response_sets = []
     responses_with_tfidf = []
-    
+
     idx = 1
     for response_set in response_list:
-        
+
         for chunk in extract_chunks(response_set):
             chunk_master_dict[chunk] = ''
-        
+
         chunk_master_list = list(chunk_master_dict.keys())
         chunk_master_list = [
             chunk for chunk in chunk_master_list if " " in chunk]
@@ -96,7 +96,7 @@ def main():
             keywords.append(new_keyword_set)
             processed_response = [process_text(
                 response) for response in response_set]
-            processed_response_sets.append(processed_response)            
+            processed_response_sets.append(processed_response)
 
         image_object_array.append(ImageObject(
             response_set, new_keyword_set, idx))
@@ -104,21 +104,22 @@ def main():
 
     B = nx.Graph()
     bottom_nodes = get_master_kw_list(image_object_array)
-    
+
     loadImages()
     images = {k: PIL.Image.open(fname) for k, fname in icons.items()}
 
-    demoImages = getRandomImages()
+    #demoImages = getRandomImages()
+    demoImages = [14, 26, 42, 68]
     i = 1
     for image_object in image_object_array:
         keywords = image_object.get_keywords()
         if i in demoImages:
-          top_nodes.append(i)
-          color = random_color()
-          B.add_node(i,image=images[str(i)])
-          for kw in keywords:
-            if kw in bottom_nodes:
-                B.add_edge(i, kw, color=color)
+            top_nodes.append(i)
+            color = random_color()
+            B.add_node(i, image=images[str(i)])
+            for kw in keywords:
+                if kw in bottom_nodes:
+                    B.add_edge(i, kw, color=color)
         i += 1
 
     left, right = nx.bipartite.sets(B, top_nodes=top_nodes)
@@ -130,20 +131,20 @@ def main():
     for node in right:
         pos[node] = (2, i)
         i -= 3.75
-    
+
     print(len(top_nodes) * 7)
     i = (len(top_nodes) * 9.25)
     for node in left:
         pos[node] = (1, i)
         i -= 9
-        
+
     fig, ax = plt.subplots()
     edges = B.edges()
     edge_colors = [B[u][v]['color'] for u, v in edges]
 
     nx.draw(B, pos=pos, with_labels=True, node_color=(0.8, 0.8, 0.8),
-            edge_color=edge_colors, font_size=15, width = 4)
-    
+            edge_color=edge_colors, font_size=15, width=4)
+
     # Transform from data coordinates (scaled between xlim and ylim) to display coordinates
     tr_figure = ax.transData.transform
 
@@ -153,7 +154,7 @@ def main():
     # Select the size of the image (relative to the X axis)
     icon_size = (ax.get_xlim()[1] - ax.get_xlim()[0]) * 0.12
     icon_center = icon_size / 2.0
-    
+
     isInt = True
     for n in B.nodes:
         try:
@@ -169,10 +170,11 @@ def main():
             a.imshow(B.nodes[n]["image"])
             a.axis("off")
         isInt = True
-    
+
     plt.show()
     print(len(image_object_array))
 # ------------------------------------------------------------- #
+
 
 def extract_chunks(response_set: str) -> dict:
     chunked_token = ""
@@ -203,7 +205,7 @@ def process_text(text: str) -> list:
     processed_tokens = [word for word in lemmatized_words
                         if word not in STOPWORDS and not
                         word.isdigit() and word not in punctuation]
-    
+
     return processed_tokens
 
 
@@ -241,6 +243,7 @@ def random_color():
         rgb = [r, g, b]
     return rgb
 
+
 def getRandomImages():
     randomImages = []
     i = 0
@@ -250,6 +253,7 @@ def getRandomImages():
     print(randomImages)
     return randomImages
 
+
 def loadImages():
     directory = 'images'
     for filename in os.listdir(directory):
@@ -258,6 +262,7 @@ def loadImages():
             pathname, extension = os.path.splitext(f)
             fname = pathname.split('/')
             icons[fname[-1]] = f
+
 
 if __name__ == "__main__":
     main()

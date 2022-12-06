@@ -213,7 +213,7 @@ def setResponseSimilarity(imageNum, responseSet, responseSynSet):
                 count += 1
 
     for s1, s2 in itertools.combinations(responseSynSet, 2):
-        # filter out the nones:
+        # filter out the kws without synsets:
         synsets1 = [ss for ss in s1 if ss]
         synsets2 = [ss for ss in s2 if ss]
 
