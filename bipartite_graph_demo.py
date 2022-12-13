@@ -245,9 +245,11 @@ def random_color():
 def get_random_images():
     random_images = []
     i = 0
-    while i < 5:
-        random_images.append(random.randint(1, 70))
-        i += 1
+    while i < 4:
+        num = random.randint(1, 70)
+        if num not in random_images:
+          random_images.append(num)
+          i += 1  
     print(random_images)
     return random_images
 
