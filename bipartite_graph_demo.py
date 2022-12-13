@@ -154,13 +154,13 @@ def main():
     icon_center = icon_size / 2.0
 
     # Position photos over image nodes
-    isInt = True
+    is_int = True
     for n in B.nodes:
         try:
             int(n)
         except ValueError:
-            isInt = False
-        if isInt:
+            is_int = False
+        if is_int:
             xf, yf = tr_figure(pos[n])
             xa, ya = tr_axes((xf, yf))
             # get overlapped axes and plot icon
@@ -168,7 +168,7 @@ def main():
                 [xa - icon_center, ya - icon_center, icon_size, icon_size])
             a.imshow(B.nodes[n]["image"])
             a.axis("off")
-        isInt = True
+        is_int = True
 
     # display final graph
     plt.show()
@@ -221,8 +221,6 @@ def pos_sorter(word_tag):
         return None
 
 # create a master list of the keywords without duplicates for graphing
-# the bottom nodes
-
 def get_master_kw_list(objectArray: list):
     master_kw_list = []
     for image_object in image_object_array:
@@ -248,9 +246,8 @@ def get_random_images():
     while i < 4:
         num = random.randint(1, 70)
         if num not in random_images:
-          random_images.append(num)
-          i += 1  
-    print(random_images)
+            random_images.append(num)
+            i += 1
     return random_images
 
 

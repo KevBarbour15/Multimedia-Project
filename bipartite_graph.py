@@ -190,7 +190,7 @@ def get_master_kw_list(objectArray: list):
                 master_kw_list.append(kw)
     return master_kw_list
 
-
+# generate a random color for the image node's edges
 def random_color():
     rgb = []
     for i in range(3):
