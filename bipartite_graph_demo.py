@@ -8,7 +8,6 @@ from yake import KeywordExtractor
 import networkx as nx
 from networkx.algorithms import bipartite
 import matplotlib.pyplot as plt
-import numpy as np
 import random
 import os
 import PIL
