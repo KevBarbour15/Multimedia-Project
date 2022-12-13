@@ -15,35 +15,31 @@ MAX_NGRAM_SIZE = 1  # Size of keywords, more than 1 to get phrases.
 DEDUPLICATION_THRESHSOLD = 0.9
 NUM_OF_KEYWORDS = 6  # Number of keywords to retrieve per corpus.
 
-imageObjectArray = []
-topNodes = []
-bottomNodes = []
-edgesArray = []
+image_object_array = []
 
-icons = {}
 
 class ImageObject:
-    def __init__(self, id, responseSet, responseSynSet, similarityScore):
+    def __init__(self, id, response_set, response_synset, similarityScore):
         self._id: int = id
         self._similarityScore: float = similarityScore
-        self.__responseSet: dict = responseSet
-        self.__responseSynSet: dict = responseSynSet
+        self.__response_set: dict = response_set
+        self.__response_synset: dict = response_synset
 
-    def getImageID(self) -> int:
+    def get_image_id(self) -> int:
         return self._id
 
-    def getSimilarityScore(self) -> float:
+    def get_similarity_score(self) -> float:
         return self._similarityScore
 
-    def getResponseSet(self) -> dict:
-        return self.__responseSet
+    def getresponse_set(self) -> dict:
+        return self.__response_set
 
-    def getResponseSynSet(self) -> dict:
-        return self.__responseSynSet
+    def getresponse_synset(self) -> dict:
+        return self.__response_synset
 
 
 def main():
-    responseList = []
+    response_list = []
     annotations = ["/annotations/Image_Annotations_Set_1.csv",
                    "/annotations/Image_Annotations_Set_2.csv",
                    "/annotations/Image_Annotations_Set_3.csv"]
@@ -51,22 +47,22 @@ def main():
     for file in annotations:
         df = pd.read_csv(os.getcwd() + file)
         rli = [df[str(col + 1)] for col in range(df.shape[1] - 1)]
-        responseList.extend(rli)
+        response_list.extend(rli)
 
     def preprocess_corpus(texts):
-        englishStopWords = set(stopwords.words("english"))
+        english_stop_words = set(stopwords.words("english"))
 
-        def removeStopsDigits(tokens):
-            return [token.lower() for token in tokens if token not in englishStopWords and not token.isdigit() and token not in punctuation]
+        def remove_stops_digits(tokens):
+            return [token.lower() for token in tokens if token not in english_stop_words and not token.isdigit() and token not in punctuation]
 
-        return [removeStopsDigits(word_tokenize(text)) for text in texts]
+        return [remove_stops_digits(word_tokenize(text)) for text in texts]
 
-    processedResponsesList = []
+    processed_responses_list = []
 
-    for idx in range(len(responseList)):
-        processedResponsesList.append(preprocess_corpus(responseList[idx]))
+    for idx in range(len(response_list)):
+        processed_responses_list.append(preprocess_corpus(response_list[idx]))
 
-    def posTagger(nltk_tag):
+    def pos_tagger(nltk_tag):
         if nltk_tag.startswith('J'):
             return wordnet.ADJ
         elif nltk_tag.startswith('V'):
@@ -78,74 +74,75 @@ def main():
         else:
             return None
 
-    def taggedSynset(word):
-        wn_tag = posTagger(word[1])
+    def tagged_synset(word):
+        wn_tag = pos_tagger(word[1])
         if wn_tag is None:
             return None
         try:
             return wordnet.synsets(word[0], wn_tag)[0]
         except:
             return None
-    
-    synsetResponseList = []
+
+    synset_response_list = []
     i = 1
-    for responseSet in processedResponsesList:
-        responseSynSet = []
-        for response in responseSet:
-            synsetResponse = []
+    for response_set in processed_responses_list:
+        response_synset = []
+        for response in response_set:
+            synset_response = []
             response = pos_tag(response)
             for word in response:
-                synsetResponse.append(taggedSynset(word))
-            responseSynSet.append(synsetResponse)
-        synsetResponseList.append(responseSynSet)
+                synset_response.append(tagged_synset(word))
+            response_synset.append(synset_response)
+        synset_response_list.append(response_synset)
 
-        similarityScore = setResponseSimilarity(i, responseSet, responseSynSet)
-        imageObjectArray.append(ImageObject(
-            i, responseSet, responseSynSet, similarityScore))
+        similarityScore = set_response_similarity(
+            i, response_set, response_synset)
+        image_object_array.append(ImageObject(
+            i, response_set, response_synset, similarityScore))
         i += 1
 
-    leastVariance = getLeast(imageObjectArray)
-    mostVariance = getMost(imageObjectArray)
+    least_variance = get_least(image_object_array)
+    most_variance = get_most(image_object_array)
 
-    # add the TFIDF score to lists for graph
-    leastVarianceNum = []
-    mostVarianceNum = []
-    for image in leastVariance:
-        leastVarianceNum.append(image.getSimilarityScore())
-    for image in mostVariance:
-        mostVarianceNum.append(image.getSimilarityScore())
+    least_variance_num = []
+    most_variance_num = []
+    for image in least_variance:
+        least_variance_num.append(image.get_similarity_score())
+    for image in most_variance:
+        most_variance_num.append(image.get_similarity_score())
 
-    # create a list of the top 10 of image # for each end of variance with
-    leastImageNum = []
-    mostImageNum = []
-    for image in leastVariance:
-        leastImageNum.append("#{}".format(image.getImageID()))
-    for image in mostVariance:
-        mostImageNum.append("#{}".format(image.getImageID()))
+    # Create a list of the top 10 of image # for each end of variance with
+    least_image_num = []
+    most_image_num = []
+    for image in least_variance:
+        least_image_num.append("#{}".format(image.get_image_id()))
+    for image in most_variance:
+        most_image_num.append("#{}".format(image.get_image_id()))
 
-    labels = list(zip(leastImageNum, mostImageNum))
-    x = np.arange(len(labels))  # the label locations
-    width = 0.35  # the width of the bars
-    height = 0
+    labels = list(zip(least_image_num, most_image_num))
+    x = np.arange(len(labels))
+    width = 0.35
 
     fig, ax = plt.subplots()
-    least = ax.bar(x - width/2, leastVarianceNum,
+    least = ax.bar(x - width/2, least_variance_num,
                    width, label='Least Variance', color="lightgrey")
-    most = ax.bar(x + width/2, mostVarianceNum, width,
+    most = ax.bar(x + width/2, most_variance_num, width,
                   label='Most Variance', color="black")
 
     # Add some text for labels, title and custom x-axis tick labels, etc.
-    ax.set_xlabel('Image Rankings from 10  ----->  1')
+    ax.set_xlabel(
+        'Image Rankings from 10  ----->  1 \n (Each tuple represents 2 images, the first being least variance,'
+        + ' the other being most variance)')
     ax.set_ylabel('Average Similarity Score')
     ax.set_title(
-        'Top 10 Images with the Least Variance and Most Variance')
+        'The Top 10 Images with the Least Variance and Most Variance')
+
     ax.set_xticks(x, labels)
     ax.legend()
 
     ax.bar_label(least, padding=3)
     ax.bar_label(most, padding=3)
     plt.show()
-
 
     # lists containing the image numbers of images that correspond to the theme
     animal_pics = [1, 4, 6, 16, 18, 19, 21, 23, 39,
@@ -179,11 +176,12 @@ def main():
                   "Black Cats", "Pixar Movies", "Santa Claus", "Beetles", "Famous Artist Styles", "Famous People", "Jesus", "Notable Locations"]
 
     # display final results (average score of each category)
-    displayFinalResults(results_list, categories)
+    display_final_results(results_list, categories)
 
 #----------------------------------------------------------------#
 
-def displayFinalResults(results_list, categories):
+
+def display_final_results(results_list, categories):
     print("\n\n\n\n")
     print("***** Finals Results of General Categories *****")
     print()
@@ -192,26 +190,27 @@ def displayFinalResults(results_list, categories):
         total = 0
         if idx == 9:
             print("\n***** Final Results of Specific Categories *****\n")
-            
+
         for pic in category:
-            total += imageObjectArray[pic - 1].getSimilarityScore()
+            total += image_object_array[pic - 1].get_similarity_score()
         total = total / len(category)
         print(
             "-- Category: {} -- Score: {}".format(categories[idx], round(total, 3)))
         print()
         idx += 1
 
-def setResponseSimilarity(imageNum, responseSet, responseSynSet):
+
+def set_response_similarity(image_num, response_set, response_synset):
     score = 0.0
     count = 0
     # first check for matching words before checking for synonyms to catch names that do not have "synonyms"
-    for s1, s2 in itertools.combinations(responseSet, 2):
+    for s1, s2 in itertools.combinations(response_set, 2):
         for s in s1:
             if s in s2:
                 score += 1
                 count += 1
 
-    for s1, s2 in itertools.combinations(responseSynSet, 2):
+    for s1, s2 in itertools.combinations(response_synset, 2):
         # filter out the kws without synsets:
         synsets1 = [ss for ss in s1 if ss]
         synsets2 = [ss for ss in s2 if ss]
@@ -228,49 +227,51 @@ def setResponseSimilarity(imageNum, responseSet, responseSynSet):
             if best_score is not None:
                 score += best_score
                 count += 1
-    
     score = score / count
-    score = round(score,5)
-    print("IMAGE{}, SCORE {}".format(imageNum, score))
+    score = round(score, 5)
+    print("IMAGE{}, SCORE {}".format(image_num, score))
     return score
 
-def getLeast(obarr):
-    responseList = obarr.copy()
+
+def get_least(obarr):
+    response_list = obarr.copy()
     final_list = []
     for i in range(0, 10):
         max1 = 0
-        for j in range(len(responseList)):
-            sim = float(responseList[j].getSimilarityScore())
+        for j in range(len(response_list)):
+            sim = float(response_list[j].get_similarity_score())
             if max1 == 0:
-                max1 = responseList[j]
+                max1 = response_list[j]
             else:
-                if sim > max1.getSimilarityScore():
-                    max1 = responseList[j]
+                if sim > max1.get_similarity_score():
+                    max1 = response_list[j]
 
-        responseList.remove(max1)
+        response_list.remove(max1)
         final_list.append(max1)
 
     final_list.reverse()
     return final_list
 
-def getMost(obarr):
-    responseList = obarr.copy()
+
+def get_most(obarr):
+    response_list = obarr.copy()
     final_list = []
     for i in range(0, 10):
         max1 = 0
-        for j in range(len(responseList)):
-            sim = float(responseList[j].getSimilarityScore())
+        for j in range(len(response_list)):
+            sim = float(response_list[j].get_similarity_score())
             if max1 == 0:
-                max1 = responseList[j]
+                max1 = response_list[j]
             else:
-                if sim < max1.getSimilarityScore():
-                    max1 = responseList[j]
+                if sim < max1.get_similarity_score():
+                    max1 = response_list[j]
 
-        responseList.remove(max1)
+        response_list.remove(max1)
         final_list.append(max1)
 
     final_list.reverse()
     return final_list
+
 
 if __name__ == "__main__":
     main()

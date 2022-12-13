@@ -24,7 +24,6 @@ chunk_master_list = []
 image_object_array = []
 top_nodes = []
 bottom_nodes = []
-
 icons = {}
 
 
@@ -56,14 +55,13 @@ def main():
         response_list.extend(rli)
 
     processed_response_sets = []
-    responses_with_tfidf = []
-    
+
     idx = 1
     for response_set in response_list:
-        
+
         for chunk in extract_chunks(response_set):
             chunk_master_dict[chunk] = ''
-        
+
         chunk_master_list = list(chunk_master_dict.keys())
         chunk_master_list = [
             chunk for chunk in chunk_master_list if " " in chunk]
@@ -76,7 +74,6 @@ def main():
             features=None)
 
         keywords = []
-        responses_final = []
         for response in response_set:
             raw_keywords_set = extractor.extract_keywords(response)
 
@@ -90,13 +87,13 @@ def main():
 
                 new_keyword_set.append(kw.lower())
                 new_keyword_set = [*set(new_keyword_set)]
-            
+
             keywords.append(new_keyword_set)
             processed_response = [process_text(
                 response) for response in response_set]
             processed_response_sets.append(processed_response)
             print(new_keyword_set)
-            
+
         image_object_array.append(ImageObject(
             response_set, new_keyword_set, idx))
         idx += 1
@@ -133,10 +130,11 @@ def main():
 
     nx.draw(B, pos=pos, with_labels=True, node_color=(0.8, 0.8, 0.8),
             edge_color=edge_colors)
- 
+
     plt.show()
-    
+
 # ------------------------------------------------------------- #
+
 
 def extract_chunks(response_set: str) -> dict:
     chunked_token = ""
@@ -185,8 +183,6 @@ def pos_sorter(word_tag):
 
 # create a master list of the keywords without duplicates for graphing
 # the bottom nodes
-
-
 def get_master_kw_list(objectArray: list):
     master_kw_list = []
     for image_object in image_object_array:

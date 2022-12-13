@@ -10,7 +10,6 @@ from networkx.algorithms import bipartite
 import matplotlib.pyplot as plt
 import numpy as np
 import random
-import math
 import os
 import PIL
 
@@ -25,9 +24,9 @@ chunk_master_dict = {}
 chunk_master_list = []
 
 image_object_array = []
+
 top_nodes = []
 bottom_nodes = []
-
 icons = {}
 
 
@@ -59,7 +58,6 @@ def main():
         response_list.extend(rli)
 
     processed_response_sets = []
-    responses_with_tfidf = []
 
     idx = 1
     for response_set in response_list:
@@ -79,7 +77,6 @@ def main():
             features=None)
 
         keywords = []
-        responses_final = []
         for response in response_set:
             raw_keywords_set = extractor.extract_keywords(response)
 
@@ -102,18 +99,22 @@ def main():
             response_set, new_keyword_set, idx))
         idx += 1
 
+    # Initialize graph and load keywords (no repeats) into nodes
     B = nx.Graph()
     bottom_nodes = get_master_kw_list(image_object_array)
 
-    loadImages()
+    # Read images into memory for displaying in the graph
+    load_images()
     images = {k: PIL.Image.open(fname) for k, fname in icons.items()}
 
-    #demoImages = getRandomImages()
-    demoImages = [14, 26, 42, 68]
+    # Generate a list of 5 random images to display in the graph
+    demo_images = get_random_images()
+
+    # Create edges between image nodes and keyword nodes
     i = 1
     for image_object in image_object_array:
         keywords = image_object.get_keywords()
-        if i in demoImages:
+        if i in demo_images:
             top_nodes.append(i)
             color = random_color()
             B.add_node(i, image=images[str(i)])
@@ -122,17 +123,15 @@ def main():
                     B.add_edge(i, kw, color=color)
         i += 1
 
+    # Update position for node from each group
     left, right = nx.bipartite.sets(B, top_nodes=top_nodes)
     pos = {}
 
-    # Update position for node from each group
-    print(len(right)*3.475)
     i = len(right) * 3.475
     for node in right:
         pos[node] = (2, i)
         i -= 3.75
 
-    print(len(top_nodes) * 7)
     i = (len(top_nodes) * 9.25)
     for node in left:
         pos[node] = (1, i)
@@ -155,6 +154,7 @@ def main():
     icon_size = (ax.get_xlim()[1] - ax.get_xlim()[0]) * 0.12
     icon_center = icon_size / 2.0
 
+    # Position photos over image nodes
     isInt = True
     for n in B.nodes:
         try:
@@ -171,8 +171,8 @@ def main():
             a.axis("off")
         isInt = True
 
+    # display final graph
     plt.show()
-    print(len(image_object_array))
 # ------------------------------------------------------------- #
 
 
@@ -224,7 +224,6 @@ def pos_sorter(word_tag):
 # create a master list of the keywords without duplicates for graphing
 # the bottom nodes
 
-
 def get_master_kw_list(objectArray: list):
     master_kw_list = []
     for image_object in image_object_array:
@@ -244,17 +243,17 @@ def random_color():
     return rgb
 
 
-def getRandomImages():
-    randomImages = []
+def get_random_images():
+    random_images = []
     i = 0
     while i < 5:
-        randomImages.append(random.randint(1, 70))
+        random_images.append(random.randint(1, 70))
         i += 1
-    print(randomImages)
-    return randomImages
+    print(random_images)
+    return random_images
 
 
-def loadImages():
+def load_images():
     directory = 'images'
     for filename in os.listdir(directory):
         f = os.path.join(directory, filename)
