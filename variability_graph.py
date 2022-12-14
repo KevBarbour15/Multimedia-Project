@@ -197,7 +197,8 @@ def display_final_results(results_list, categories):
 def set_response_similarity(image_num, response_set, response_synset):
     score = 0.0
     count = 0
-    # first check for matching words before checking for synonyms to catch names that do not have "synonyms"
+    # first check for matching words before checking for synonyms to catch words that do not have "synonyms"
+    # this is to catch things like proper nouns that may not be in wordnet 
     for s1, s2 in itertools.combinations(response_set, 2):
         for s in s1:
             if s in s2:

@@ -10,7 +10,9 @@ by running:
 To install the required packages, you will then need to run:
     pip install -r requirements.txt 
 
-All of the images used for this project are stored under the "images" folder.
+All of the images used for this project are stored under the "images" folder. All of the annotations being
+processed are stored under the "annotations" folder. 
 
 The 3 different graphs used for this project are meant to be run indiviually. Each has its
-own main method and does not require a Makefile to run. 
+own main method and does not require a Makefile to run. Run each file as you would any other file
+in your favorite Python environment. 
