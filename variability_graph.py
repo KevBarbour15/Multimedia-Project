@@ -31,12 +31,6 @@ class ImageObject:
     def get_similarity_score(self) -> float:
         return self._similarityScore
 
-    def getresponse_set(self) -> dict:
-        return self.__response_set
-
-    def getresponse_synset(self) -> dict:
-        return self.__response_synset
-
 
 def main():
     response_list = []

@@ -91,7 +91,6 @@ def main():
             processed_response = [process_text(
                 response) for response in response_set]
             processed_response_sets.append(processed_response)
-            print(new_keyword_set)
 
         image_object_array.append(ImageObject(
             response_set, new_keyword_set, idx))
